@@ -8,10 +8,10 @@ export interface Hike {
 
 export const hikes: Hike[] = [
   {
-    name: 'Besseggen',
-    location: 'Jotunheimen, Norway',
+    name: 'Trolltunga',
+    location: 'Vestland, Norway',
     year: 2023,
-    description: 'Classic ridge hike between the bright-green Gjende and the deep-blue Bessvatnet. One of the most iconic hikes in Norway.',
+    description: 'One of the most dramatic hikes in Norway — a cliff jutting out 700 metres above Lake Ringedalsvatnet.',
   },
   {
     name: 'Preikestolen',
