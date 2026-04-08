@@ -56,13 +56,13 @@ export default function DogSection({ isAdmin, resolvedImage }: DogSectionProps) 
             {/* Text */}
             <div className="flex flex-col gap-4">
               <p className="text-muted text-base leading-relaxed">
-                Caia is my dog and the best co-worker I&apos;ve had. She&apos;s always
-                up for a walk, never complains about deadlines, and has a remarkable
-                talent for napping through video calls.
+                Caia was born on 16 March 2025, so she&apos;s still very much a puppy.
+                She&apos;s already been through three dog training courses — with more to
+                come — and we work a lot on commands and everyday obedience.
               </p>
               <p className="text-muted text-base leading-relaxed">
-                Most of my hiking trips come with a four-legged hiking partner — she
-                handles the terrain better than I do.
+                She loves being outside and going on walks, but is equally happy
+                curling up in your lap the moment you sit down. The best of both worlds.
               </p>
             </div>
           </div>

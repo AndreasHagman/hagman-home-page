@@ -5,7 +5,7 @@ const hobbies = [
   { label: 'Hiking', emoji: '🏔️' },
   { label: 'Golf', emoji: '⛳' },
   { label: 'Disc Golf', emoji: '🥏' },
-  { label: 'Hytteturer', emoji: '🛖' },
+  { label: 'Cabin trips', emoji: '🛖' },
   { label: 'Side Projects', emoji: '🔧' },
   { label: 'Dog walks', emoji: '🐾' },
 ]
