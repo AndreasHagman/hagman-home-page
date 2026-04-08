@@ -46,7 +46,6 @@ export default function AdminUploadButton({ slot, label = 'Upload photo' }: Admi
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={handleChange}
       />
