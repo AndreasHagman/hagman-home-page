@@ -3,10 +3,11 @@ import ScrollFade from '@/components/ScrollFade'
 const hobbies = [
   { label: 'Running', emoji: '🏃' },
   { label: 'Hiking', emoji: '🏔️' },
-  { label: 'Game Jams', emoji: '🎮' },
+  { label: 'Golf', emoji: '⛳' },
+  { label: 'Disc Golf', emoji: '🥏' },
+  { label: 'Hytteturer', emoji: '🛖' },
   { label: 'Side Projects', emoji: '🔧' },
   { label: 'Dog walks', emoji: '🐾' },
-  { label: 'Music', emoji: '🎵' },
 ]
 
 export default function HobbySection() {
