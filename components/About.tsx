@@ -1,6 +1,7 @@
 import ScrollFade from './ScrollFade'
 
 const interests = ['Web Apps', 'Side Projects', 'Tooling', 'Running', 'Game Jams']
+const stack = ['Next.js', 'TypeScript', 'Firebase', 'Vercel']
 
 export default function About() {
   return (
@@ -43,6 +44,20 @@ export default function About() {
                 className="px-3 py-1.5 text-xs font-mono text-muted border border-border rounded-full hover:border-accent hover:text-accent transition-colors duration-200 cursor-default select-none"
               >
                 {interest}
+              </span>
+            ))}
+          </div>
+
+          <p className="text-xs font-mono text-muted mt-8 mb-3 tracking-[0.12em] uppercase opacity-60">
+            Usually built with
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {stack.map((item) => (
+              <span
+                key={item}
+                className="px-3 py-1.5 text-xs font-mono text-accent border border-accent/30 rounded-full cursor-default select-none"
+              >
+                {item}
               </span>
             ))}
           </div>
