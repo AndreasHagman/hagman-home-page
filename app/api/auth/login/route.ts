@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const allowedEmails = (process.env.ADMIN_EMAIL ?? '').split(',').map((e) => e.trim()).filter(Boolean)
     const allowedPhones = (process.env.ADMIN_PHONE ?? '').split(',').map((p) => p.trim()).filter(Boolean)
 
-    const emailOk = !!decoded.email && allowedEmails.includes(decoded.email)
+const emailOk = !!decoded.email && allowedEmails.includes(decoded.email)
     const phoneOk = !!decoded.phone_number && allowedPhones.includes(decoded.phone_number)
 
     if (!emailOk && !phoneOk) {
