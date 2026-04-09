@@ -10,7 +10,7 @@ export interface Project {
 export const projects: Project[] = [
   {
     name: 'Løpeapp',
-    description: 'Track runs and analyze training data — built for family and friends. Features Strava integration and a running advent calendar.',
+    description: 'Track runs and analyze training data — built for family and friends. Features Strava integration, challenges, AI-powered data analysis, and a running advent calendar.',
     href: 'https://lopeapp.andreashagman.no',
     tag: 'Fitness',
     type: 'app',
