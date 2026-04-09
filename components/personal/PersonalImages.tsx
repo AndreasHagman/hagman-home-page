@@ -34,6 +34,7 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
   const [hikeHeights, setHikeHeights] = useState<Record<string, number>>({})
   const [dogImages, setDogImages] = useState<string[]>([])
   const [dogPositions, setDogPositions] = useState<string[]>([])
+  const [dogHeight, setDogHeight] = useState<number | undefined>()
   const [experienceImages, setExperienceImages] = useState<Record<string, string[]>>({})
   const [experiencePositions, setExperiencePositions] = useState<Record<string, string[]>>({})
   const [experienceHeights, setExperienceHeights] = useState<Record<string, number>>({})
@@ -78,6 +79,7 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
 
       setDogImages(toArray(data['caia']))
       setDogPositions(toArray(data['caia-positions']))
+      setDogHeight(toNumber(data['caia-height']))
     }
 
     fetchImages()
@@ -101,6 +103,7 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
         isAdmin={isAdmin}
         resolvedImages={dogImages}
         positions={dogPositions}
+        initialHeight={dogHeight}
       />
     </>
   )

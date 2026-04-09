@@ -1,21 +1,30 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Move, Check } from 'lucide-react'
 import ScrollFade from '@/components/ScrollFade'
 import AdminUploadButton from './AdminUploadButton'
 import DraggableImage from './DraggableImage'
+import HeightControl from './HeightControl'
+
+const DEFAULT_HEIGHT = 256
 
 interface DogSectionProps {
   isAdmin?: boolean
   resolvedImages?: string[]
   positions?: string[]
+  initialHeight?: number
 }
 
-export default function DogSection({ isAdmin, resolvedImages = [], positions = [] }: DogSectionProps) {
+export default function DogSection({ isAdmin, resolvedImages = [], positions = [], initialHeight }: DogSectionProps) {
   const [index, setIndex] = useState(0)
   const [isRepositioning, setIsRepositioning] = useState(false)
+  const [imageHeight, setImageHeight] = useState(initialHeight ?? DEFAULT_HEIGHT)
   const touchStartX = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (initialHeight) setImageHeight(initialHeight)
+  }, [initialHeight])
 
   const hasImages = resolvedImages.length > 0
   const hasMultiple = resolvedImages.length > 1
@@ -43,7 +52,8 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
           <div className="flex flex-col sm:flex-row gap-8 items-start">
             {/* Photo */}
             <div
-              className="relative w-full sm:w-64 h-64 flex-shrink-0 rounded-2xl overflow-hidden bg-surface border border-border flex items-center justify-center group"
+              className="relative w-full sm:w-64 flex-shrink-0 rounded-2xl overflow-hidden bg-surface border border-border flex items-center justify-center group"
+              style={{ height: imageHeight }}
               onTouchStart={!isRepositioning ? (e) => { touchStartX.current = e.touches[0].clientX } : undefined}
               onTouchEnd={!isRepositioning && hasMultiple ? (e) => {
                 if (touchStartX.current === null) return
@@ -70,73 +80,55 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
 
               {hasMultiple && !isRepositioning && (
                 <>
-                  <button
-                    onClick={prev}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
-                    style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 75%, transparent)' }}
-                    aria-label="Previous photo"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button
-                    onClick={next}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
-                    style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 75%, transparent)' }}
-                    aria-label="Next photo"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
+                  <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10" style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 75%, transparent)' }} aria-label="Previous photo"><ChevronLeft size={14} /></button>
+                  <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10" style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 75%, transparent)' }} aria-label="Next photo"><ChevronRight size={14} /></button>
                 </>
               )}
 
               {hasMultiple && !isRepositioning && (
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
                   {resolvedImages.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setIndex(i)}
-                      className="w-1.5 h-1.5 rounded-full transition-colors duration-200"
-                      style={{
-                        backgroundColor: i === index
-                          ? 'var(--foreground)'
-                          : 'color-mix(in srgb, var(--foreground) 35%, transparent)',
-                      }}
-                      aria-label={`Photo ${i + 1}`}
-                    />
+                    <button key={i} onClick={() => setIndex(i)} className="w-1.5 h-1.5 rounded-full transition-colors duration-200" style={{ backgroundColor: i === index ? 'var(--foreground)' : 'color-mix(in srgb, var(--foreground) 35%, transparent)' }} aria-label={`Photo ${i + 1}`} />
                   ))}
                 </div>
               )}
 
               {isRepositioning && (
-                <div
-                  className="absolute top-2 left-1/2 -translate-x-1/2 text-[9px] font-mono px-2 py-0.5 rounded-full pointer-events-none z-10"
-                  style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)', color: 'var(--text-muted)' }}
-                >
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 text-[9px] font-mono px-2 py-0.5 rounded-full pointer-events-none z-10" style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)', color: 'var(--text-muted)' }}>
                   drag to reposition
                 </div>
               )}
 
-              {isAdmin && hasImages && (
-                <div className="absolute bottom-2 left-2 z-10">
-                  <button
-                    onClick={() => setIsRepositioning((v) => !v)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono rounded-full border transition-colors duration-200"
-                    style={{
-                      color: isRepositioning ? 'var(--accent)' : 'var(--text-muted)',
-                      borderColor: isRepositioning ? 'var(--accent)' : 'var(--border)',
-                      backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)',
-                    }}
-                  >
-                    {isRepositioning ? <Check size={11} /> : <Move size={11} />}
-                    {isRepositioning ? 'Done' : 'Move'}
-                  </button>
-                </div>
-              )}
-              {isAdmin && !isRepositioning && (
-                <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
-                  {hasImages && <AdminUploadButton slot="caia" label="+" mode="add" />}
-                  <AdminUploadButton slot="caia" label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
-                </div>
+              {isAdmin && (
+                <>
+                  {!isRepositioning && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <HeightControl slot="caia" value={imageHeight} onChange={setImageHeight} />
+                    </div>
+                  )}
+                  {hasImages && (
+                    <div className="absolute bottom-2 left-2 z-10">
+                      <button
+                        onClick={() => setIsRepositioning((v) => !v)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono rounded-full border transition-colors duration-200"
+                        style={{
+                          color: isRepositioning ? 'var(--accent)' : 'var(--text-muted)',
+                          borderColor: isRepositioning ? 'var(--accent)' : 'var(--border)',
+                          backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)',
+                        }}
+                      >
+                        {isRepositioning ? <Check size={11} /> : <Move size={11} />}
+                        {isRepositioning ? 'Done' : 'Move'}
+                      </button>
+                    </div>
+                  )}
+                  {!isRepositioning && (
+                    <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+                      {hasImages && <AdminUploadButton slot="caia" label="+" mode="add" />}
+                      <AdminUploadButton slot="caia" label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
