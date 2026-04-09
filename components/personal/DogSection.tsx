@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Move, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Check, Trash2 } from 'lucide-react'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import ScrollFade from '@/components/ScrollFade'
@@ -52,6 +52,19 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
     setLocalImages(imgs)
     setLocalPositions(pos)
     setIndex(newIndex)
+    await setDoc(
+      doc(db, 'personal-images', 'slots'),
+      { caia: imgs, 'caia-positions': pos },
+      { merge: true }
+    ).catch(console.error)
+  }
+
+  async function deleteImage() {
+    const imgs = localImages.filter((_, i) => i !== index)
+    const pos = localPositions.filter((_, i) => i !== index)
+    setLocalImages(imgs)
+    setLocalPositions(pos)
+    setIndex((i) => Math.max(0, Math.min(i, imgs.length - 1)))
     await setDoc(
       doc(db, 'personal-images', 'slots'),
       { caia: imgs, 'caia-positions': pos },
@@ -168,6 +181,14 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
                   )}
                   {!isRepositioning && (
                     <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+                      {hasImages && (
+                        <button
+                          onClick={deleteImage}
+                          className="flex items-center justify-center w-7 h-7 rounded-full border transition-colors duration-200 hover:border-red-400 hover:text-red-400"
+                          style={{ color: 'var(--text-muted)', borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)' }}
+                          aria-label="Delete photo"
+                        ><Trash2 size={11} /></button>
+                      )}
                       {hasImages && <AdminUploadButton slot="caia" label="+" mode="add" />}
                       <AdminUploadButton slot="caia" label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
                     </div>

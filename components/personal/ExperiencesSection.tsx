@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Move, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Check, Trash2 } from 'lucide-react'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { experiences } from '@/lib/experiences'
@@ -64,6 +64,19 @@ function ExperienceCard({
     setLocalImages(imgs)
     setLocalPositions(pos)
     setIndex(newIndex)
+    await setDoc(
+      doc(db, 'personal-images', 'slots'),
+      { [slot]: imgs, [`${slot}-positions`]: pos },
+      { merge: true }
+    ).catch(console.error)
+  }
+
+  async function deleteImage() {
+    const imgs = localImages.filter((_, i) => i !== index)
+    const pos = localPositions.filter((_, i) => i !== index)
+    setLocalImages(imgs)
+    setLocalPositions(pos)
+    setIndex((i) => Math.max(0, Math.min(i, imgs.length - 1)))
     await setDoc(
       doc(db, 'personal-images', 'slots'),
       { [slot]: imgs, [`${slot}-positions`]: pos },
@@ -165,6 +178,14 @@ function ExperienceCard({
             )}
             {!isRepositioning && (
               <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-10">
+                {hasImages && (
+                  <button
+                    onClick={deleteImage}
+                    className="flex items-center justify-center w-6 h-6 rounded-full border transition-colors duration-200 hover:border-red-400 hover:text-red-400"
+                    style={{ color: 'var(--text-muted)', borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)' }}
+                    aria-label="Delete photo"
+                  ><Trash2 size={10} /></button>
+                )}
                 {hasImages && <AdminUploadButton slot={slot} label="+" mode="add" />}
                 <AdminUploadButton slot={slot} label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
               </div>
