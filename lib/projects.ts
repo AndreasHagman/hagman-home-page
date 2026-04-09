@@ -5,6 +5,11 @@ export interface Project {
   tag: string
   type?: 'app' | 'repo'
   note?: string
+  slug?: string
+  repoHref?: string
+  techStack?: string[]
+  longDescription?: string
+  features?: string[]
 }
 
 export const projects: Project[] = [
@@ -14,6 +19,16 @@ export const projects: Project[] = [
     href: 'https://lopeapp.andreashagman.no',
     tag: 'Fitness',
     type: 'app',
+    slug: 'lopeapp',
+    techStack: ['Next.js', 'TypeScript', 'Firebase', 'Strava API', 'OpenAI'],
+    longDescription: 'Løpeapp started as a way to share running stats with family and friends without everyone needing a Strava account. It has since grown into a fully featured training companion with challenges, leaderboards, and AI-driven insights into your training load and progression.',
+    features: [
+      'Strava integration — automatically syncs runs after every activity',
+      'Group challenges with live leaderboards',
+      'AI-powered training analysis and weekly summaries',
+      'Running advent calendar — a new challenge every day in December',
+      'Personal stats dashboard with pace, distance, and elevation trends',
+    ],
   },
   {
     name: 'Quiz App',
@@ -21,6 +36,17 @@ export const projects: Project[] = [
     href: 'https://quiz.andreashagman.no',
     tag: 'Game',
     type: 'app',
+    slug: 'quiz-app',
+    techStack: ['Next.js', 'TypeScript', 'Firebase', 'Spotify API'],
+    longDescription: 'Built for game nights with friends, the Quiz App supports multiple game modes in a single session — from classic multiple choice to drawing rounds where players guess what others have sketched, and music rounds powered by the Spotify API.',
+    features: [
+      'Multiple choice rounds with custom question sets',
+      'Drawing rounds — players draw, others guess',
+      'Music guessing powered by Spotify',
+      'Estimation challenges — closest answer wins',
+      'Real-time multiplayer via Firebase',
+      'Host controls for pacing and skipping rounds',
+    ],
   },
   {
     name: 'MMM-NOKElectricityForecast',

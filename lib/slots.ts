@@ -7,4 +7,5 @@ export const SLOTS = {
   RACES: 'races',
   hike: (name: string) => `hike-${toSlug(name)}`,
   exp: (name: string) => `exp-${toSlug(name)}`,
+  project: (slug: string) => `project-${slug}`,
 } as const
