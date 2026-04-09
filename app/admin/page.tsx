@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   signInWithPopup, GoogleAuthProvider,
@@ -18,7 +18,6 @@ export default function AdminPage() {
   const [phone, setPhone] = useState('+47')
   const [otp, setOtp] = useState('')
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null)
-  const recaptchaRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
   async function exchangeToken(idToken: string): Promise<boolean> {
@@ -54,11 +53,12 @@ export default function AdminPage() {
     setError('')
     try {
       if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaRef.current!, { size: 'invisible' })
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' })
       }
       const result = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
       setConfirmation(result)
-    } catch {
+    } catch (err) {
+      console.error('Phone sign-in error:', err)
       setError('Failed to send code. Check the number and try again.')
       window.recaptchaVerifier?.clear()
       window.recaptchaVerifier = undefined
@@ -120,6 +120,9 @@ export default function AdminPage() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
+        {/* reCAPTCHA anchor — must always be in the DOM */}
+        <div id="recaptcha-container" />
+
         {/* Phone */}
         {!confirmation ? (
           <div className="flex flex-col gap-3">
@@ -130,7 +133,6 @@ export default function AdminPage() {
               onChange={(e) => setPhone(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-foreground placeholder:text-muted text-sm font-mono focus:outline-none focus:border-accent transition-colors duration-200"
             />
-            <div ref={recaptchaRef} />
             <button
               onClick={handleSendCode}
               disabled={loading || phone.length < 8}
