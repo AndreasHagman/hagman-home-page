@@ -179,9 +179,10 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
             {/* Text */}
             <div className="flex flex-col gap-4">
               <p className="text-muted text-base leading-relaxed">
-                Caia was born on 16 March 2025, so she&apos;s still very much a puppy.
-                She&apos;s already been through three dog training courses — with more to
-                come — and we work a lot on commands and everyday obedience.
+                Caia is a Nova Scotia Duck Tolling Retriever, born on 16 March 2025,
+                so she&apos;s still very much a puppy. She&apos;s already been through
+                three dog training courses — with more to come — and we work a lot on
+                commands and everyday obedience.
               </p>
               <p className="text-muted text-base leading-relaxed">
                 She loves being outside and going on walks, but is equally happy

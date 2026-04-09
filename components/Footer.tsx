@@ -1,4 +1,4 @@
-import { Github, Linkedin } from 'lucide-react'
+import { Github, Linkedin, Mail } from 'lucide-react'
 
 export default function Footer() {
   const year = new Date().getFullYear()
@@ -14,6 +14,13 @@ export default function Footer() {
         </p>
 
         <div className="flex items-center gap-4">
+          <a
+            href="mailto:post@andreashagman.no"
+            aria-label="Email"
+            className="text-muted hover:text-accent transition-colors duration-200"
+          >
+            <Mail size={17} strokeWidth={1.75} />
+          </a>
           <a
             href="https://github.com/AndreasHagman"
             aria-label="GitHub"
