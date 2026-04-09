@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Move, Check } from 'lucide-react'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 import { experiences } from '@/lib/experiences'
 import ScrollFade from '@/components/ScrollFade'
 import AdminUploadButton from './AdminUploadButton'
@@ -32,18 +34,40 @@ function ExperienceCard({
   const [index, setIndex] = useState(0)
   const [isRepositioning, setIsRepositioning] = useState(false)
   const [imageHeight, setImageHeight] = useState(initialHeight ?? DEFAULT_HEIGHT)
+  const [localImages, setLocalImages] = useState(resolvedImages)
+  const [localPositions, setLocalPositions] = useState(positions)
   const touchStartX = useRef<number | null>(null)
 
   useEffect(() => {
     if (initialHeight) setImageHeight(initialHeight)
   }, [initialHeight])
 
-  const hasImages = resolvedImages.length > 0
-  const hasMultiple = resolvedImages.length > 1
-  const src = resolvedImages[index] ?? ''
+  useEffect(() => { setLocalImages(resolvedImages) }, [resolvedImages])
+  useEffect(() => { setLocalPositions(positions) }, [positions])
 
-  function prev() { setIndex((i) => (i - 1 + resolvedImages.length) % resolvedImages.length) }
-  function next() { setIndex((i) => (i + 1) % resolvedImages.length) }
+  const hasImages = localImages.length > 0
+  const hasMultiple = localImages.length > 1
+  const src = localImages[index] ?? ''
+
+  function prev() { setIndex((i) => (i - 1 + localImages.length) % localImages.length) }
+  function next() { setIndex((i) => (i + 1) % localImages.length) }
+
+  async function reorder(dir: -1 | 1) {
+    const newIndex = index + dir
+    if (newIndex < 0 || newIndex >= localImages.length) return
+    const imgs = [...localImages]
+    const pos = [...localPositions]
+    ;[imgs[index], imgs[newIndex]] = [imgs[newIndex], imgs[index]]
+    ;[pos[index], pos[newIndex]] = [pos[newIndex], pos[index]]
+    setLocalImages(imgs)
+    setLocalPositions(pos)
+    setIndex(newIndex)
+    await setDoc(
+      doc(db, 'personal-images', 'slots'),
+      { [slot]: imgs, [`${slot}-positions`]: pos },
+      { merge: true }
+    ).catch(console.error)
+  }
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-stretch bg-surface border border-border rounded-2xl overflow-hidden">
@@ -66,7 +90,7 @@ function ExperienceCard({
             sizes="(max-width: 640px) 100vw, 160px"
             slot={slot}
             imageIndex={index}
-            allPositions={positions}
+            allPositions={localPositions}
             isRepositioning={isRepositioning}
           />
         ) : (
@@ -84,7 +108,7 @@ function ExperienceCard({
 
         {hasMultiple && !isRepositioning && (
           <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-            {resolvedImages.map((_, i) => (
+            {localImages.map((_, i) => (
               <button key={i} onClick={() => setIndex(i)} className="w-1.5 h-1.5 rounded-full transition-colors duration-200" style={{ backgroundColor: i === index ? 'var(--foreground)' : 'color-mix(in srgb, var(--foreground) 35%, transparent)' }} aria-label={`Photo ${i + 1}`} />
             ))}
           </div>
@@ -98,6 +122,24 @@ function ExperienceCard({
 
         {isAdmin && (
           <>
+            {hasMultiple && !isRepositioning && (
+              <div className="absolute top-1.5 left-1.5 z-10 flex gap-1">
+                <button
+                  onClick={() => reorder(-1)}
+                  disabled={index === 0}
+                  className="w-5 h-5 rounded-full flex items-center justify-center border disabled:opacity-30 transition-colors duration-200"
+                  style={{ color: 'var(--text-muted)', borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)' }}
+                  aria-label="Move image earlier"
+                ><ChevronLeft size={10} /></button>
+                <button
+                  onClick={() => reorder(1)}
+                  disabled={index === localImages.length - 1}
+                  className="w-5 h-5 rounded-full flex items-center justify-center border disabled:opacity-30 transition-colors duration-200"
+                  style={{ color: 'var(--text-muted)', borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)' }}
+                  aria-label="Move image later"
+                ><ChevronRight size={10} /></button>
+              </div>
+            )}
             {!isRepositioning && (
               <div className="absolute top-1.5 right-1.5 z-10">
                 <HeightControl slot={slot} value={imageHeight} onChange={setImageHeight} />
