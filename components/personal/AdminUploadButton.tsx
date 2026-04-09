@@ -6,6 +6,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '@/lib/firebase'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif']
 
 interface AdminUploadButtonProps {
   slot: string
@@ -21,7 +22,7 @@ export default function AdminUploadButton({ slot, label = 'Upload photo', mode =
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_FILE_SIZE || !ALLOWED_TYPES.includes(file.type)) {
       setState('error')
       setTimeout(() => setState('idle'), 3000)
       return

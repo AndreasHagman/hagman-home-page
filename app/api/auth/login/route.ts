@@ -3,7 +3,32 @@ import { adminAuth } from '@/lib/firebase-admin'
 
 const SESSION_DURATION_MS = 60 * 60 * 24 * 7 * 1000 // 7 days
 
+// In-memory rate limiter — best-effort in serverless (resets per cold start)
+const attempts = new Map<string, { count: number; resetAt: number }>()
+const WINDOW_MS = 15 * 60 * 1000 // 15 minutes
+const MAX_ATTEMPTS = 10
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const entry = attempts.get(ip)
+  if (!entry || now > entry.resetAt) {
+    attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS })
+    return false
+  }
+  if (entry.count >= MAX_ATTEMPTS) return true
+  entry.count++
+  return false
+}
+
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim()
+    ?? req.headers.get('x-real-ip')
+    ?? 'unknown'
+
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const { idToken } = await req.json()
 
   if (!idToken) {

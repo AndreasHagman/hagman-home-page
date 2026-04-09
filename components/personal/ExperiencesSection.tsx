@@ -1,14 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Move, Check, Trash2 } from 'lucide-react'
 import { experiences } from '@/lib/experiences'
 import ScrollFade from '@/components/ScrollFade'
-import AdminUploadButton from './AdminUploadButton'
-import DraggableImage from './DraggableImage'
-import HeightControl from './HeightControl'
-
-const DEFAULT_HEIGHT = 160
+import ImageCarousel from './ImageCarousel'
+import { SLOTS } from '@/lib/slots'
 
 interface ExperiencesSectionProps {
   isAdmin?: boolean
@@ -17,179 +12,31 @@ interface ExperiencesSectionProps {
   experienceHeights?: Record<string, number>
 }
 
-function toSlug(name: string) {
-  return name.toLowerCase().replace(/\s+/g, '-')
-}
-
 function ExperienceCard({
-  name, location, year, description, tag, slot,
+  name, location, year, description, tag,
   resolvedImages = [], positions = [], initialHeight, isAdmin,
 }: {
   name: string; location: string; year: number; description: string
-  tag: string; slot: string; resolvedImages?: string[]; positions?: string[]
+  tag: string; resolvedImages?: string[]; positions?: string[]
   initialHeight?: number; isAdmin?: boolean
 }) {
-  const [index, setIndex] = useState(0)
-  const [isRepositioning, setIsRepositioning] = useState(false)
-  const [imageHeight, setImageHeight] = useState(initialHeight ?? DEFAULT_HEIGHT)
-  const [localImages, setLocalImages] = useState(resolvedImages)
-  const [localPositions, setLocalPositions] = useState(positions)
-  const touchStartX = useRef<number | null>(null)
-
-  useEffect(() => {
-    if (initialHeight) setImageHeight(initialHeight)
-  }, [initialHeight])
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setLocalImages(resolvedImages) }, [JSON.stringify(resolvedImages)])
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setLocalPositions(positions) }, [JSON.stringify(positions)])
-
-  const hasImages = localImages.length > 0
-  const hasMultiple = localImages.length > 1
-  const src = localImages[index] ?? ''
-
-  function prev() { setIndex((i) => (i - 1 + localImages.length) % localImages.length) }
-  function next() { setIndex((i) => (i + 1) % localImages.length) }
-
-  async function reorder(dir: -1 | 1) {
-    const newIndex = index + dir
-    if (newIndex < 0 || newIndex >= localImages.length) return
-    const imgs = [...localImages]
-    const pos = [...localPositions]
-    ;[imgs[index], imgs[newIndex]] = [imgs[newIndex], imgs[index]]
-    ;[pos[index], pos[newIndex]] = [pos[newIndex], pos[index]]
-    setLocalImages(imgs)
-    setLocalPositions(pos)
-    setIndex(newIndex)
-    await fetch('/api/admin/slots', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ [slot]: imgs, [`${slot}-positions`]: pos }),
-    }).catch(console.error)
-  }
-
-  async function deleteImage() {
-    const imgs = localImages.filter((_, i) => i !== index)
-    const pos = localPositions.filter((_, i) => i !== index)
-    setLocalImages(imgs)
-    setLocalPositions(pos)
-    setIndex((i) => Math.max(0, Math.min(i, imgs.length - 1)))
-    await fetch('/api/admin/slots', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ [slot]: imgs, [`${slot}-positions`]: pos }),
-    }).catch(console.error)
-  }
+  const slot = SLOTS.exp(name)
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-stretch bg-surface border border-border rounded-2xl overflow-hidden">
       {/* Image */}
-      <div
-        className="relative w-full sm:w-40 flex-shrink-0 bg-surface flex items-center justify-center border-b sm:border-b-0 sm:border-r border-border group"
-        style={{ height: imageHeight }}
-        onTouchStart={!isRepositioning ? (e) => { touchStartX.current = e.touches[0].clientX } : undefined}
-        onTouchEnd={!isRepositioning && hasMultiple ? (e) => {
-          if (touchStartX.current === null) return
-          const delta = touchStartX.current - e.changedTouches[0].clientX
-          if (Math.abs(delta) > 40) delta > 0 ? next() : prev()
-          touchStartX.current = null
-        } : undefined}
-      >
-        {hasImages ? (
-          <DraggableImage
-            src={src}
-            alt={`${name} ${index + 1}`}
-            sizes="(max-width: 640px) 100vw, 160px"
-            slot={slot}
-            imageIndex={index}
-            allPositions={localPositions}
-            isRepositioning={isRepositioning}
-          />
-        ) : (
-          <span className="text-[10px] font-mono text-muted opacity-40 tracking-[0.15em] uppercase text-center px-3">
-            No photo yet
-          </span>
-        )}
-
-        {hasMultiple && !isRepositioning && (
-          <>
-            <button onClick={prev} className="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10" style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 75%, transparent)' }} aria-label="Previous photo"><ChevronLeft size={12} /></button>
-            <button onClick={next} className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10" style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 75%, transparent)' }} aria-label="Next photo"><ChevronRight size={12} /></button>
-          </>
-        )}
-
-        {hasMultiple && !isRepositioning && (
-          <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-            {localImages.map((_, i) => (
-              <button key={i} onClick={() => setIndex(i)} className="w-1.5 h-1.5 rounded-full transition-colors duration-200" style={{ backgroundColor: i === index ? 'var(--foreground)' : 'color-mix(in srgb, var(--foreground) 35%, transparent)' }} aria-label={`Photo ${i + 1}`} />
-            ))}
-          </div>
-        )}
-
-        {isRepositioning && (
-          <div className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[9px] font-mono px-2 py-0.5 rounded-full pointer-events-none z-10" style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)', color: 'var(--text-muted)' }}>
-            drag to reposition
-          </div>
-        )}
-
-        {isAdmin && (
-          <>
-            {hasMultiple && !isRepositioning && (
-              <div className="absolute top-1.5 left-1.5 z-10 flex gap-1">
-                <button
-                  onClick={() => reorder(-1)}
-                  disabled={index === 0}
-                  className="w-5 h-5 rounded-full flex items-center justify-center border disabled:opacity-30 transition-colors duration-200"
-                  style={{ color: 'var(--text-muted)', borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)' }}
-                  aria-label="Move image earlier"
-                ><ChevronLeft size={10} /></button>
-                <button
-                  onClick={() => reorder(1)}
-                  disabled={index === localImages.length - 1}
-                  className="w-5 h-5 rounded-full flex items-center justify-center border disabled:opacity-30 transition-colors duration-200"
-                  style={{ color: 'var(--text-muted)', borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)' }}
-                  aria-label="Move image later"
-                ><ChevronRight size={10} /></button>
-              </div>
-            )}
-            {!isRepositioning && (
-              <div className="absolute top-1.5 right-1.5 z-10">
-                <HeightControl slot={slot} value={imageHeight} onChange={setImageHeight} />
-              </div>
-            )}
-            {hasImages && (
-              <div className="absolute bottom-1.5 left-1.5 z-10">
-                <button
-                  onClick={() => setIsRepositioning((v) => !v)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono rounded-full border transition-colors duration-200"
-                  style={{
-                    color: isRepositioning ? 'var(--accent)' : 'var(--text-muted)',
-                    borderColor: isRepositioning ? 'var(--accent)' : 'var(--border)',
-                    backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)',
-                  }}
-                >
-                  {isRepositioning ? <Check size={10} /> : <Move size={10} />}
-                  {isRepositioning ? 'Done' : 'Move'}
-                </button>
-              </div>
-            )}
-            {!isRepositioning && (
-              <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-10">
-                {hasImages && (
-                  <button
-                    onClick={deleteImage}
-                    className="flex items-center justify-center w-6 h-6 rounded-full border transition-colors duration-200 hover:border-red-400 hover:text-red-400"
-                    style={{ color: 'var(--text-muted)', borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)' }}
-                    aria-label="Delete photo"
-                  ><Trash2 size={10} /></button>
-                )}
-                {hasImages && <AdminUploadButton slot={slot} label="+" mode="add" />}
-                <AdminUploadButton slot={slot} label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
-              </div>
-            )}
-          </>
-        )}
+      <div className="relative w-full sm:w-40 flex-shrink-0 bg-surface border-b sm:border-b-0 sm:border-r border-border">
+        <ImageCarousel
+          slot={slot}
+          resolvedImages={resolvedImages}
+          positions={positions}
+          initialHeight={initialHeight}
+          defaultHeight={160}
+          alt={name}
+          sizes="(max-width: 640px) 100vw, 160px"
+          isAdmin={isAdmin}
+          compact
+        />
       </div>
 
       {/* Content */}
@@ -224,7 +71,6 @@ export default function ExperiencesSection({ isAdmin, experienceImages = {}, exp
             <ScrollFade key={exp.name} delay={i * 80}>
               <ExperienceCard
                 {...exp}
-                slot={`exp-${toSlug(exp.name)}`}
                 resolvedImages={experienceImages[exp.name]}
                 positions={experiencePositions[exp.name]}
                 initialHeight={experienceHeights[exp.name]}
