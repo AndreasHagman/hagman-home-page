@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase'
 import HikeSection from './HikeSection'
 import DogSection from './DogSection'
 import ExperiencesSection from './ExperiencesSection'
+import RacesSection from './RacesSection'
 import { hikes } from '@/lib/hikes'
 import { experiences } from '@/lib/experiences'
 
@@ -35,6 +36,9 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
   const [dogImages, setDogImages] = useState<string[]>([])
   const [dogPositions, setDogPositions] = useState<string[]>([])
   const [dogHeight, setDogHeight] = useState<number | undefined>()
+  const [raceImages, setRaceImages] = useState<string[]>([])
+  const [racePositions, setRacePositions] = useState<string[]>([])
+  const [raceHeight, setRaceHeight] = useState<number | undefined>()
   const [experienceImages, setExperienceImages] = useState<Record<string, string[]>>({})
   const [experiencePositions, setExperiencePositions] = useState<Record<string, string[]>>({})
   const [experienceHeights, setExperienceHeights] = useState<Record<string, number>>({})
@@ -80,6 +84,10 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
       setDogImages(toArray(data['caia']))
       setDogPositions(toArray(data['caia-positions']))
       setDogHeight(toNumber(data['caia-height']))
+
+      setRaceImages(toArray(data['races']))
+      setRacePositions(toArray(data['races-positions']))
+      setRaceHeight(toNumber(data['races-height']))
     }
 
     fetchImages()
@@ -108,6 +116,12 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
         experienceImages={experienceImages}
         experiencePositions={experiencePositions}
         experienceHeights={experienceHeights}
+      />
+      <RacesSection
+        isAdmin={isAdmin}
+        resolvedImages={raceImages}
+        positions={racePositions}
+        initialHeight={raceHeight}
       />
       <HikeSection
         isAdmin={isAdmin}
