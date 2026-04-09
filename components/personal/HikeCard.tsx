@@ -36,8 +36,10 @@ export default function HikeCard({ hike, resolvedImages = [], positions = [], in
     if (initialHeight) setImageHeight(initialHeight)
   }, [initialHeight])
 
-  useEffect(() => { setLocalImages(resolvedImages) }, [resolvedImages])
-  useEffect(() => { setLocalPositions(positions) }, [positions])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setLocalImages(resolvedImages) }, [JSON.stringify(resolvedImages)])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setLocalPositions(positions) }, [JSON.stringify(positions)])
 
   const hasImages = localImages.length > 0
   const hasMultiple = localImages.length > 1
