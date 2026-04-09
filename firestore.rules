@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /personal-images/{document=**} {
       allow read: if true;
-      allow write: if true;
+      allow write: if false; // All writes go through /api/admin/slots (Firebase Admin SDK)
     }
   }
 }

@@ -2,8 +2,6 @@
 
 import Image from 'next/image'
 import { useState, useRef, useEffect } from 'react'
-import { doc, setDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
 
 function parsePosition(pos: string): [number, number] {
   if (!pos) return [50, 50]
@@ -60,11 +58,11 @@ export default function DraggableImage({
     const updated = [...allPositions]
     while (updated.length <= imageIndex) updated.push('50% 50%')
     updated[imageIndex] = `${Math.round(posX)}% ${Math.round(posY)}%`
-    await setDoc(
-      doc(db, 'personal-images', 'slots'),
-      { [`${slot}-positions`]: updated },
-      { merge: true }
-    ).catch(console.error)
+    await fetch('/api/admin/slots', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [`${slot}-positions`]: updated }),
+    }).catch(console.error)
   }
 
   return (

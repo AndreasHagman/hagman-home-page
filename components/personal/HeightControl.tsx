@@ -1,8 +1,6 @@
 'use client'
 
 import { Minus, Plus } from 'lucide-react'
-import { doc, setDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
 
 interface HeightControlProps {
   slot: string
@@ -19,11 +17,11 @@ export default function HeightControl({
   async function adjust(delta: number) {
     const next = Math.max(min, Math.min(max, value + delta))
     onChange(next)
-    await setDoc(
-      doc(db, 'personal-images', 'slots'),
-      { [`${slot}-height`]: next },
-      { merge: true }
-    ).catch(console.error)
+    await fetch('/api/admin/slots', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [`${slot}-height`]: next }),
+    }).catch(console.error)
   }
 
   return (

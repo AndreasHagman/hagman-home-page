@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { adminAuth } from '@/lib/firebase-admin'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import PersonalHero from '@/components/personal/PersonalHero'
@@ -12,7 +13,17 @@ export const metadata = {
 
 export default async function PersonalPage() {
   const cookieStore = await cookies()
-  const isAdmin = cookieStore.get('admin_session')?.value === 'authenticated'
+  const sessionCookie = cookieStore.get('admin_session')?.value
+
+  let isAdmin = false
+  if (sessionCookie) {
+    try {
+      await adminAuth.verifySessionCookie(sessionCookie, true)
+      isAdmin = true
+    } catch {
+      isAdmin = false
+    }
+  }
 
   return (
     <>

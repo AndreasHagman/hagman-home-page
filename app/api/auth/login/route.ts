@@ -1,22 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { adminAuth } from '@/lib/firebase-admin'
+
+const SESSION_DURATION_MS = 60 * 60 * 24 * 7 * 1000 // 7 days
 
 export async function POST(req: NextRequest) {
-  const { password } = await req.json()
+  const { idToken } = await req.json()
 
-  if (!process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
+  if (!idToken) {
+    return NextResponse.json({ error: 'Missing token' }, { status: 400 })
   }
 
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Wrong password' }, { status: 401 })
-  }
+  try {
+    const decoded = await adminAuth.verifyIdToken(idToken)
 
-  const res = NextResponse.json({ success: true })
-  res.cookies.set('admin_session', 'authenticated', {
-    httpOnly: true,
-    path: '/',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-  })
-  return res
+    const allowedEmails = (process.env.ADMIN_EMAIL ?? '').split(',').map((e) => e.trim())
+    if (!decoded.email || !allowedEmails.includes(decoded.email)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    const sessionCookie = await adminAuth.createSessionCookie(idToken, {
+      expiresIn: SESSION_DURATION_MS,
+    })
+
+    const res = NextResponse.json({ success: true })
+    res.cookies.set('admin_session', sessionCookie, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: SESSION_DURATION_MS / 1000,
+      path: '/',
+    })
+    return res
+  } catch {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+  }
 }

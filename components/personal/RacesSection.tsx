@@ -2,8 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Move, Check, Trash2 } from 'lucide-react'
-import { doc, setDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
 import ScrollFade from '@/components/ScrollFade'
 import AdminUploadButton from './AdminUploadButton'
 import DraggableImage from './DraggableImage'
@@ -59,11 +57,11 @@ export default function RacesSection({ isAdmin, resolvedImages = [], positions =
     setLocalImages(imgs)
     setLocalPositions(pos)
     setIndex(newIndex)
-    await setDoc(
-      doc(db, 'personal-images', 'slots'),
-      { races: imgs, 'races-positions': pos },
-      { merge: true }
-    ).catch(console.error)
+    await fetch('/api/admin/slots', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ races: imgs, 'races-positions': pos }),
+    }).catch(console.error)
   }
 
   async function deleteImage() {
@@ -72,11 +70,11 @@ export default function RacesSection({ isAdmin, resolvedImages = [], positions =
     setLocalImages(imgs)
     setLocalPositions(pos)
     setIndex((i) => Math.max(0, Math.min(i, imgs.length - 1)))
-    await setDoc(
-      doc(db, 'personal-images', 'slots'),
-      { races: imgs, 'races-positions': pos },
-      { merge: true }
-    ).catch(console.error)
+    await fetch('/api/admin/slots', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ races: imgs, 'races-positions': pos }),
+    }).catch(console.error)
   }
 
   return (

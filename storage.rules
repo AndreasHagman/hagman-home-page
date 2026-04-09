@@ -3,7 +3,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     match /personal/{allPaths=**} {
       allow read: if true;
-      allow write: if true;
+      allow write: if true; // Uploads come from AdminUploadButton (client SDK, admin-only UI)
     }
   }
 }

@@ -3,8 +3,9 @@
 import { useRef, useState } from 'react'
 import { Upload, Check, Loader } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { doc, setDoc, getDoc } from 'firebase/firestore'
-import { storage, db } from '@/lib/firebase'
+import { storage } from '@/lib/firebase'
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 
 interface AdminUploadButtonProps {
   slot: string
@@ -20,6 +21,12 @@ export default function AdminUploadButton({ slot, label = 'Upload photo', mode =
     const file = e.target.files?.[0]
     if (!file) return
 
+    if (file.size > MAX_FILE_SIZE) {
+      setState('error')
+      setTimeout(() => setState('idle'), 3000)
+      return
+    }
+
     setState('uploading')
     try {
       const storagePath = mode === 'add' ? `personal/${slot}-${Date.now()}` : `personal/${slot}`
@@ -27,16 +34,15 @@ export default function AdminUploadButton({ slot, label = 'Upload photo', mode =
       await uploadBytes(storageRef, file)
       const url = await getDownloadURL(storageRef)
 
-      const slotRef = doc(db, 'personal-images', 'slots')
+      const res = await fetch('/api/admin/slots', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: mode === 'add'
+          ? JSON.stringify({ [`${slot}__append`]: url })
+          : JSON.stringify({ [slot]: [url] }),
+      })
 
-      if (mode === 'add') {
-        const snap = await getDoc(slotRef)
-        const existing = snap.exists() ? snap.data()[slot] : undefined
-        const current: string[] = Array.isArray(existing) ? existing : existing ? [existing] : []
-        await setDoc(slotRef, { [slot]: [...current, url] }, { merge: true })
-      } else {
-        await setDoc(slotRef, { [slot]: [url] }, { merge: true })
-      }
+      if (!res.ok) throw new Error('Failed to update slot')
 
       setState('done')
       setTimeout(() => window.location.reload(), 800)
