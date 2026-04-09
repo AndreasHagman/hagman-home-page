@@ -12,9 +12,10 @@ import HeightControl from './HeightControl'
 const DEFAULT_HEIGHT = 256
 
 const races = [
-  { name: 'Tough Viking',     year: 2023 },
-  { name: 'Sentrumsløpet',    year: 2025 },
-  { name: 'Nordmarkstravern', year: 2025 },
+  { name: 'Tough Viking',        year: 2023, note: undefined },
+  { name: 'Holmenkollstafetten', year: 2024, note: 'with Storebrand' },
+  { name: 'Sentrumsløpet',       year: 2025, note: undefined },
+  { name: 'Nordmarkstravern',    year: 2025, note: undefined },
 ]
 
 interface RacesSectionProps {
@@ -214,6 +215,9 @@ export default function RacesSection({ isAdmin, resolvedImages = [], positions =
                     {race.name}
                   </span>
                   <span className="text-[11px] font-mono text-muted">{race.year}</span>
+                  {race.note && (
+                    <span className="text-[11px] font-mono text-muted opacity-60">{race.note}</span>
+                  )}
                 </div>
               ))}
             </div>
