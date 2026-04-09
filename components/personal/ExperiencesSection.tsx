@@ -1,16 +1,20 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Move, Check } from 'lucide-react'
 import { experiences } from '@/lib/experiences'
 import ScrollFade from '@/components/ScrollFade'
 import AdminUploadButton from './AdminUploadButton'
 import DraggableImage from './DraggableImage'
+import HeightControl from './HeightControl'
+
+const DEFAULT_HEIGHT = 160
 
 interface ExperiencesSectionProps {
   isAdmin?: boolean
   experienceImages?: Record<string, string[]>
   experiencePositions?: Record<string, string[]>
+  experienceHeights?: Record<string, number>
 }
 
 function toSlug(name: string) {
@@ -19,14 +23,20 @@ function toSlug(name: string) {
 
 function ExperienceCard({
   name, location, year, description, tag, slot,
-  resolvedImages = [], positions = [], isAdmin,
+  resolvedImages = [], positions = [], initialHeight, isAdmin,
 }: {
   name: string; location: string; year: number; description: string
-  tag: string; slot: string; resolvedImages?: string[]; positions?: string[]; isAdmin?: boolean
+  tag: string; slot: string; resolvedImages?: string[]; positions?: string[]
+  initialHeight?: number; isAdmin?: boolean
 }) {
   const [index, setIndex] = useState(0)
   const [isRepositioning, setIsRepositioning] = useState(false)
+  const [imageHeight, setImageHeight] = useState(initialHeight ?? DEFAULT_HEIGHT)
   const touchStartX = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (initialHeight) setImageHeight(initialHeight)
+  }, [initialHeight])
 
   const hasImages = resolvedImages.length > 0
   const hasMultiple = resolvedImages.length > 1
@@ -39,7 +49,8 @@ function ExperienceCard({
     <div className="flex flex-col sm:flex-row sm:items-stretch bg-surface border border-border rounded-2xl overflow-hidden">
       {/* Image */}
       <div
-        className="relative w-full sm:w-40 h-40 sm:h-auto flex-shrink-0 bg-surface flex items-center justify-center border-b sm:border-b-0 sm:border-r border-border group"
+        className="relative w-full sm:w-40 flex-shrink-0 bg-surface flex items-center justify-center border-b sm:border-b-0 sm:border-r border-border group"
+        style={{ height: imageHeight }}
         onTouchStart={!isRepositioning ? (e) => { touchStartX.current = e.touches[0].clientX } : undefined}
         onTouchEnd={!isRepositioning && hasMultiple ? (e) => {
           if (touchStartX.current === null) return
@@ -85,27 +96,36 @@ function ExperienceCard({
           </div>
         )}
 
-        {isAdmin && hasImages && (
-          <div className="absolute bottom-1.5 left-1.5 z-10">
-            <button
-              onClick={() => setIsRepositioning((v) => !v)}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono rounded-full border transition-colors duration-200"
-              style={{
-                color: isRepositioning ? 'var(--accent)' : 'var(--text-muted)',
-                borderColor: isRepositioning ? 'var(--accent)' : 'var(--border)',
-                backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)',
-              }}
-            >
-              {isRepositioning ? <Check size={10} /> : <Move size={10} />}
-              {isRepositioning ? 'Done' : 'Move'}
-            </button>
-          </div>
-        )}
-        {isAdmin && !isRepositioning && (
-          <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-10">
-            {hasImages && <AdminUploadButton slot={slot} label="+" mode="add" />}
-            <AdminUploadButton slot={slot} label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
-          </div>
+        {isAdmin && (
+          <>
+            {!isRepositioning && (
+              <div className="absolute top-1.5 right-1.5 z-10">
+                <HeightControl slot={slot} value={imageHeight} onChange={setImageHeight} />
+              </div>
+            )}
+            {hasImages && (
+              <div className="absolute bottom-1.5 left-1.5 z-10">
+                <button
+                  onClick={() => setIsRepositioning((v) => !v)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono rounded-full border transition-colors duration-200"
+                  style={{
+                    color: isRepositioning ? 'var(--accent)' : 'var(--text-muted)',
+                    borderColor: isRepositioning ? 'var(--accent)' : 'var(--border)',
+                    backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)',
+                  }}
+                >
+                  {isRepositioning ? <Check size={10} /> : <Move size={10} />}
+                  {isRepositioning ? 'Done' : 'Move'}
+                </button>
+              </div>
+            )}
+            {!isRepositioning && (
+              <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-10">
+                {hasImages && <AdminUploadButton slot={slot} label="+" mode="add" />}
+                <AdminUploadButton slot={slot} label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -123,7 +143,7 @@ function ExperienceCard({
   )
 }
 
-export default function ExperiencesSection({ isAdmin, experienceImages = {}, experiencePositions = {} }: ExperiencesSectionProps) {
+export default function ExperiencesSection({ isAdmin, experienceImages = {}, experiencePositions = {}, experienceHeights = {} }: ExperiencesSectionProps) {
   return (
     <section className="py-16 border-t border-border">
       <div className="max-w-5xl mx-auto px-6">
@@ -144,6 +164,7 @@ export default function ExperiencesSection({ isAdmin, experienceImages = {}, exp
                 slot={`exp-${toSlug(exp.name)}`}
                 resolvedImages={experienceImages[exp.name]}
                 positions={experiencePositions[exp.name]}
+                initialHeight={experienceHeights[exp.name]}
                 isAdmin={isAdmin}
               />
             </ScrollFade>
