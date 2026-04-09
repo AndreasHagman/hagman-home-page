@@ -5,19 +5,22 @@ import { useState, useRef } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import ScrollFade from '@/components/ScrollFade'
 import AdminUploadButton from './AdminUploadButton'
+import PositionPicker from './PositionPicker'
 
 interface DogSectionProps {
   isAdmin?: boolean
   resolvedImages?: string[]
+  positions?: string[]
 }
 
-export default function DogSection({ isAdmin, resolvedImages = [] }: DogSectionProps) {
+export default function DogSection({ isAdmin, resolvedImages = [], positions = [] }: DogSectionProps) {
   const [index, setIndex] = useState(0)
   const touchStartX = useRef<number | null>(null)
 
   const hasImages = resolvedImages.length > 0
   const hasMultiple = resolvedImages.length > 1
   const src = resolvedImages[index] ?? ''
+  const objectPosition = positions[index] || 'center'
 
   function prev() {
     setIndex((i) => (i - 1 + resolvedImages.length) % resolvedImages.length)
@@ -65,6 +68,7 @@ export default function DogSection({ isAdmin, resolvedImages = [] }: DogSectionP
                   alt={`Caia ${index + 1}`}
                   fill
                   className="object-cover"
+                  style={{ objectPosition }}
                   sizes="256px"
                   unoptimized={src.includes('.gif')}
                 />
@@ -115,18 +119,28 @@ export default function DogSection({ isAdmin, resolvedImages = [] }: DogSectionP
                 </div>
               )}
 
-              {/* Admin upload buttons */}
+              {/* Admin overlay */}
               {isAdmin && (
-                <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+                <>
                   {hasImages && (
-                    <AdminUploadButton slot="caia" label="+" mode="add" />
+                    <div className="absolute bottom-2 left-2 z-10">
+                      <PositionPicker
+                        slot="caia"
+                        imageIndex={index}
+                        allPositions={positions}
+                        current={objectPosition}
+                      />
+                    </div>
                   )}
-                  <AdminUploadButton
-                    slot="caia"
-                    label={hasImages ? 'Replace' : 'Add photo'}
-                    mode="replace"
-                  />
-                </div>
+                  <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+                    {hasImages && <AdminUploadButton slot="caia" label="+" mode="add" />}
+                    <AdminUploadButton
+                      slot="caia"
+                      label={hasImages ? 'Replace' : 'Add photo'}
+                      mode="replace"
+                    />
+                  </div>
+                </>
               )}
             </div>
 

@@ -4,7 +4,6 @@ import Footer from '@/components/Footer'
 import PersonalHero from '@/components/personal/PersonalHero'
 import HobbySection from '@/components/personal/HobbySection'
 import PersonalImages from '@/components/personal/PersonalImages'
-import ExperiencesSection from '@/components/personal/ExperiencesSection'
 
 export const metadata = {
   title: 'About me — Andreas Hagman',
@@ -21,7 +20,6 @@ export default async function PersonalPage() {
       <main>
         <PersonalHero />
         <HobbySection />
-        <ExperiencesSection />
         <PersonalImages isAdmin={isAdmin} />
       </main>
       <Footer />

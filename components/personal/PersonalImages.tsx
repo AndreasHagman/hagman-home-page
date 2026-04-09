@@ -5,7 +5,9 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import HikeSection from './HikeSection'
 import DogSection from './DogSection'
+import ExperiencesSection from './ExperiencesSection'
 import { hikes } from '@/lib/hikes'
+import { experiences } from '@/lib/experiences'
 
 interface PersonalImagesProps {
   isAdmin: boolean
@@ -23,7 +25,11 @@ function toArray(value: unknown): string[] {
 
 export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
   const [hikeImages, setHikeImages] = useState<Record<string, string[]>>({})
+  const [hikePositions, setHikePositions] = useState<Record<string, string[]>>({})
   const [dogImages, setDogImages] = useState<string[]>([])
+  const [dogPositions, setDogPositions] = useState<string[]>([])
+  const [experienceImages, setExperienceImages] = useState<Record<string, string[]>>({})
+  const [experiencePositions, setExperiencePositions] = useState<Record<string, string[]>>({})
 
   useEffect(() => {
     async function fetchImages() {
@@ -32,14 +38,32 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
 
       const data = snap.data() as Record<string, unknown>
 
-      const resolved: Record<string, string[]> = {}
+      const resolvedHikeImages: Record<string, string[]> = {}
+      const resolvedHikePositions: Record<string, string[]> = {}
       for (const hike of hikes) {
-        const slot = `hike-${toSlug(hike.name)}`
-        const imgs = toArray(data[slot])
-        if (imgs.length) resolved[hike.name] = imgs
+        const slug = toSlug(hike.name)
+        const imgs = toArray(data[`hike-${slug}`])
+        if (imgs.length) resolvedHikeImages[hike.name] = imgs
+        const pos = toArray(data[`hike-${slug}-positions`])
+        if (pos.length) resolvedHikePositions[hike.name] = pos
       }
-      setHikeImages(resolved)
+      setHikeImages(resolvedHikeImages)
+      setHikePositions(resolvedHikePositions)
+
+      const resolvedExpImages: Record<string, string[]> = {}
+      const resolvedExpPositions: Record<string, string[]> = {}
+      for (const exp of experiences) {
+        const slug = toSlug(exp.name)
+        const imgs = toArray(data[`exp-${slug}`])
+        if (imgs.length) resolvedExpImages[exp.name] = imgs
+        const pos = toArray(data[`exp-${slug}-positions`])
+        if (pos.length) resolvedExpPositions[exp.name] = pos
+      }
+      setExperienceImages(resolvedExpImages)
+      setExperiencePositions(resolvedExpPositions)
+
       setDogImages(toArray(data['caia']))
+      setDogPositions(toArray(data['caia-positions']))
     }
 
     fetchImages()
@@ -47,8 +71,21 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
 
   return (
     <>
-      <HikeSection isAdmin={isAdmin} hikeImages={hikeImages} />
-      <DogSection isAdmin={isAdmin} resolvedImages={dogImages} />
+      <ExperiencesSection
+        isAdmin={isAdmin}
+        experienceImages={experienceImages}
+        experiencePositions={experiencePositions}
+      />
+      <HikeSection
+        isAdmin={isAdmin}
+        hikeImages={hikeImages}
+        hikePositions={hikePositions}
+      />
+      <DogSection
+        isAdmin={isAdmin}
+        resolvedImages={dogImages}
+        positions={dogPositions}
+      />
     </>
   )
 }

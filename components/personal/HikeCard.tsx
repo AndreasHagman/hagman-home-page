@@ -4,11 +4,13 @@ import Image from 'next/image'
 import { useState, useRef } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import AdminUploadButton from './AdminUploadButton'
+import PositionPicker from './PositionPicker'
 import type { Hike } from '@/lib/hikes'
 
 interface HikeCardProps {
   hike: Hike
   resolvedImages?: string[]
+  positions?: string[]
   isAdmin?: boolean
 }
 
@@ -16,7 +18,7 @@ function toSlug(name: string) {
   return name.toLowerCase().replace(/\s+/g, '-')
 }
 
-export default function HikeCard({ hike, resolvedImages = [], isAdmin }: HikeCardProps) {
+export default function HikeCard({ hike, resolvedImages = [], positions = [], isAdmin }: HikeCardProps) {
   const slot = `hike-${toSlug(hike.name)}`
   const [index, setIndex] = useState(0)
   const touchStartX = useRef<number | null>(null)
@@ -24,6 +26,7 @@ export default function HikeCard({ hike, resolvedImages = [], isAdmin }: HikeCar
   const hasImages = resolvedImages.length > 0
   const hasMultiple = resolvedImages.length > 1
   const src = resolvedImages[index] ?? ''
+  const objectPosition = positions[index] || 'center'
 
   function prev() {
     setIndex((i) => (i - 1 + resolvedImages.length) % resolvedImages.length)
@@ -51,6 +54,7 @@ export default function HikeCard({ hike, resolvedImages = [], isAdmin }: HikeCar
             alt={`${hike.name} ${index + 1}`}
             fill
             className="object-cover"
+            style={{ objectPosition }}
             sizes="(max-width: 768px) 100vw, 33vw"
             unoptimized={src.includes('.gif')}
           />
@@ -60,7 +64,7 @@ export default function HikeCard({ hike, resolvedImages = [], isAdmin }: HikeCar
           </span>
         )}
 
-        {/* Prev / Next arrows (desktop hover) */}
+        {/* Prev / Next arrows */}
         {hasMultiple && (
           <>
             <button
@@ -101,18 +105,28 @@ export default function HikeCard({ hike, resolvedImages = [], isAdmin }: HikeCar
           </div>
         )}
 
-        {/* Admin upload buttons */}
+        {/* Admin overlay */}
         {isAdmin && (
-          <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+          <>
             {hasImages && (
-              <AdminUploadButton slot={slot} label="+" mode="add" />
+              <div className="absolute bottom-2 left-2 z-10">
+                <PositionPicker
+                  slot={slot}
+                  imageIndex={index}
+                  allPositions={positions}
+                  current={objectPosition}
+                />
+              </div>
             )}
-            <AdminUploadButton
-              slot={slot}
-              label={hasImages ? 'Replace' : 'Add photo'}
-              mode="replace"
-            />
-          </div>
+            <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+              {hasImages && <AdminUploadButton slot={slot} label="+" mode="add" />}
+              <AdminUploadButton
+                slot={slot}
+                label={hasImages ? 'Replace' : 'Add photo'}
+                mode="replace"
+              />
+            </div>
+          </>
         )}
       </div>
 

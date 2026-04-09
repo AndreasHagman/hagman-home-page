@@ -5,9 +5,10 @@ import ScrollFade from '@/components/ScrollFade'
 interface HikeSectionProps {
   isAdmin?: boolean
   hikeImages?: Record<string, string[]>
+  hikePositions?: Record<string, string[]>
 }
 
-export default function HikeSection({ isAdmin, hikeImages = {} }: HikeSectionProps) {
+export default function HikeSection({ isAdmin, hikeImages = {}, hikePositions = {} }: HikeSectionProps) {
   return (
     <section className="py-16 border-t border-border">
       <div className="max-w-5xl mx-auto px-6">
@@ -36,6 +37,7 @@ export default function HikeSection({ isAdmin, hikeImages = {} }: HikeSectionPro
               <HikeCard
                 hike={hike}
                 resolvedImages={hikeImages[hike.name]}
+                positions={hikePositions[hike.name]}
                 isAdmin={isAdmin}
               />
             </ScrollFade>
