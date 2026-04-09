@@ -3,15 +3,16 @@
 import { useRef, useState } from 'react'
 import { Upload, Check, Loader } from 'lucide-react'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { doc, setDoc } from 'firebase/firestore'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { storage, db } from '@/lib/firebase'
 
 interface AdminUploadButtonProps {
   slot: string
   label?: string
+  mode?: 'replace' | 'add'
 }
 
-export default function AdminUploadButton({ slot, label = 'Upload photo' }: AdminUploadButtonProps) {
+export default function AdminUploadButton({ slot, label = 'Upload photo', mode = 'replace' }: AdminUploadButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [state, setState] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle')
 
@@ -21,15 +22,21 @@ export default function AdminUploadButton({ slot, label = 'Upload photo' }: Admi
 
     setState('uploading')
     try {
-      const storageRef = ref(storage, `personal/${slot}`)
+      const storagePath = mode === 'add' ? `personal/${slot}-${Date.now()}` : `personal/${slot}`
+      const storageRef = ref(storage, storagePath)
       await uploadBytes(storageRef, file)
       const url = await getDownloadURL(storageRef)
 
-      await setDoc(
-        doc(db, 'personal-images', 'slots'),
-        { [slot]: url },
-        { merge: true }
-      )
+      const slotRef = doc(db, 'personal-images', 'slots')
+
+      if (mode === 'add') {
+        const snap = await getDoc(slotRef)
+        const existing = snap.exists() ? snap.data()[slot] : undefined
+        const current: string[] = Array.isArray(existing) ? existing : existing ? [existing] : []
+        await setDoc(slotRef, { [slot]: [...current, url] }, { merge: true })
+      } else {
+        await setDoc(slotRef, { [slot]: [url] }, { merge: true })
+      }
 
       setState('done')
       setTimeout(() => window.location.reload(), 800)

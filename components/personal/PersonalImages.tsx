@@ -15,25 +15,31 @@ function toSlug(name: string) {
   return name.toLowerCase().replace(/\s+/g, '-')
 }
 
+function toArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value as string[]
+  if (typeof value === 'string' && value) return [value]
+  return []
+}
+
 export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
-  const [hikeImages, setHikeImages] = useState<Record<string, string>>({})
-  const [dogImage, setDogImage] = useState<string | undefined>()
+  const [hikeImages, setHikeImages] = useState<Record<string, string[]>>({})
+  const [dogImages, setDogImages] = useState<string[]>([])
 
   useEffect(() => {
     async function fetchImages() {
       const snap = await getDoc(doc(db, 'personal-images', 'slots'))
       if (!snap.exists()) return
 
-      const data = snap.data() as Record<string, string>
+      const data = snap.data() as Record<string, unknown>
 
-      const resolved: Record<string, string> = {}
+      const resolved: Record<string, string[]> = {}
       for (const hike of hikes) {
         const slot = `hike-${toSlug(hike.name)}`
-        if (data[slot]) resolved[hike.name] = data[slot]
+        const imgs = toArray(data[slot])
+        if (imgs.length) resolved[hike.name] = imgs
       }
       setHikeImages(resolved)
-
-      if (data['caia']) setDogImage(data['caia'])
+      setDogImages(toArray(data['caia']))
     }
 
     fetchImages()
@@ -42,7 +48,7 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
   return (
     <>
       <HikeSection isAdmin={isAdmin} hikeImages={hikeImages} />
-      <DogSection isAdmin={isAdmin} resolvedImage={dogImage} />
+      <DogSection isAdmin={isAdmin} resolvedImages={dogImages} />
     </>
   )
 }

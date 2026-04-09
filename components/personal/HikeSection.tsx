@@ -4,7 +4,7 @@ import ScrollFade from '@/components/ScrollFade'
 
 interface HikeSectionProps {
   isAdmin?: boolean
-  hikeImages?: Record<string, string>
+  hikeImages?: Record<string, string[]>
 }
 
 export default function HikeSection({ isAdmin, hikeImages = {} }: HikeSectionProps) {
@@ -35,7 +35,7 @@ export default function HikeSection({ isAdmin, hikeImages = {} }: HikeSectionPro
             <ScrollFade key={hike.name} delay={i * 80}>
               <HikeCard
                 hike={hike}
-                resolvedImage={hikeImages[hike.name]}
+                resolvedImages={hikeImages[hike.name]}
                 isAdmin={isAdmin}
               />
             </ScrollFade>
