@@ -1,11 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import { useState, useRef } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Check } from 'lucide-react'
 import ScrollFade from '@/components/ScrollFade'
 import AdminUploadButton from './AdminUploadButton'
-import PositionPicker from './PositionPicker'
+import DraggableImage from './DraggableImage'
 
 interface DogSectionProps {
   isAdmin?: boolean
@@ -15,32 +14,23 @@ interface DogSectionProps {
 
 export default function DogSection({ isAdmin, resolvedImages = [], positions = [] }: DogSectionProps) {
   const [index, setIndex] = useState(0)
+  const [isRepositioning, setIsRepositioning] = useState(false)
   const touchStartX = useRef<number | null>(null)
 
   const hasImages = resolvedImages.length > 0
   const hasMultiple = resolvedImages.length > 1
   const src = resolvedImages[index] ?? ''
-  const objectPosition = positions[index] || 'center'
 
-  function prev() {
-    setIndex((i) => (i - 1 + resolvedImages.length) % resolvedImages.length)
-  }
-  function next() {
-    setIndex((i) => (i + 1) % resolvedImages.length)
-  }
+  function prev() { setIndex((i) => (i - 1 + resolvedImages.length) % resolvedImages.length) }
+  function next() { setIndex((i) => (i + 1) % resolvedImages.length) }
 
   return (
     <section className="py-16 border-t border-border">
       <div className="max-w-5xl mx-auto px-6">
         <ScrollFade>
           <div className="flex items-center gap-3 mb-4">
-            <span
-              className="w-1.5 h-1.5 rounded-full bg-accent inline-block flex-shrink-0"
-              aria-hidden="true"
-            />
-            <span className="text-xs font-mono text-muted tracking-[0.18em] uppercase">
-              My dog
-            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block flex-shrink-0" aria-hidden="true" />
+            <span className="text-xs font-mono text-muted tracking-[0.18em] uppercase">My dog</span>
           </div>
 
           <p
@@ -51,26 +41,26 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
           </p>
 
           <div className="flex flex-col sm:flex-row gap-8 items-start">
-            {/* Photo carousel */}
+            {/* Photo */}
             <div
               className="relative w-full sm:w-64 h-64 flex-shrink-0 rounded-2xl overflow-hidden bg-surface border border-border flex items-center justify-center group"
-              onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}
-              onTouchEnd={(e) => {
-                if (touchStartX.current === null || !hasMultiple) return
+              onTouchStart={!isRepositioning ? (e) => { touchStartX.current = e.touches[0].clientX } : undefined}
+              onTouchEnd={!isRepositioning && hasMultiple ? (e) => {
+                if (touchStartX.current === null) return
                 const delta = touchStartX.current - e.changedTouches[0].clientX
                 if (Math.abs(delta) > 40) delta > 0 ? next() : prev()
                 touchStartX.current = null
-              }}
+              } : undefined}
             >
               {hasImages ? (
-                <Image
+                <DraggableImage
                   src={src}
                   alt={`Caia ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  style={{ objectPosition }}
                   sizes="256px"
-                  unoptimized={src.includes('.gif')}
+                  slot="caia"
+                  imageIndex={index}
+                  allPositions={positions}
+                  isRepositioning={isRepositioning}
                 />
               ) : (
                 <span className="text-[11px] font-mono text-muted opacity-50 tracking-[0.15em] uppercase">
@@ -78,8 +68,7 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
                 </span>
               )}
 
-              {/* Prev / Next arrows */}
-              {hasMultiple && (
+              {hasMultiple && !isRepositioning && (
                 <>
                   <button
                     onClick={prev}
@@ -100,8 +89,7 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
                 </>
               )}
 
-              {/* Dot indicators */}
-              {hasMultiple && (
+              {hasMultiple && !isRepositioning && (
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
                   {resolvedImages.map((_, i) => (
                     <button
@@ -119,28 +107,36 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
                 </div>
               )}
 
-              {/* Admin overlay */}
-              {isAdmin && (
-                <>
-                  {hasImages && (
-                    <div className="absolute bottom-2 left-2 z-10">
-                      <PositionPicker
-                        slot="caia"
-                        imageIndex={index}
-                        allPositions={positions}
-                        current={objectPosition}
-                      />
-                    </div>
-                  )}
-                  <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
-                    {hasImages && <AdminUploadButton slot="caia" label="+" mode="add" />}
-                    <AdminUploadButton
-                      slot="caia"
-                      label={hasImages ? 'Replace' : 'Add photo'}
-                      mode="replace"
-                    />
-                  </div>
-                </>
+              {isRepositioning && (
+                <div
+                  className="absolute top-2 left-1/2 -translate-x-1/2 text-[9px] font-mono px-2 py-0.5 rounded-full pointer-events-none z-10"
+                  style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)', color: 'var(--text-muted)' }}
+                >
+                  drag to reposition
+                </div>
+              )}
+
+              {isAdmin && hasImages && (
+                <div className="absolute bottom-2 left-2 z-10">
+                  <button
+                    onClick={() => setIsRepositioning((v) => !v)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono rounded-full border transition-colors duration-200"
+                    style={{
+                      color: isRepositioning ? 'var(--accent)' : 'var(--text-muted)',
+                      borderColor: isRepositioning ? 'var(--accent)' : 'var(--border)',
+                      backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)',
+                    }}
+                  >
+                    {isRepositioning ? <Check size={11} /> : <Move size={11} />}
+                    {isRepositioning ? 'Done' : 'Move'}
+                  </button>
+                </div>
+              )}
+              {isAdmin && !isRepositioning && (
+                <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+                  {hasImages && <AdminUploadButton slot="caia" label="+" mode="add" />}
+                  <AdminUploadButton slot="caia" label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
+                </div>
               )}
             </div>
 

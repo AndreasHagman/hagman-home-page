@@ -1,10 +1,9 @@
 'use client'
 
-import Image from 'next/image'
 import { useState, useRef } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Check } from 'lucide-react'
 import AdminUploadButton from './AdminUploadButton'
-import PositionPicker from './PositionPicker'
+import DraggableImage from './DraggableImage'
 import type { Hike } from '@/lib/hikes'
 
 interface HikeCardProps {
@@ -21,42 +20,37 @@ function toSlug(name: string) {
 export default function HikeCard({ hike, resolvedImages = [], positions = [], isAdmin }: HikeCardProps) {
   const slot = `hike-${toSlug(hike.name)}`
   const [index, setIndex] = useState(0)
+  const [isRepositioning, setIsRepositioning] = useState(false)
   const touchStartX = useRef<number | null>(null)
 
   const hasImages = resolvedImages.length > 0
   const hasMultiple = resolvedImages.length > 1
   const src = resolvedImages[index] ?? ''
-  const objectPosition = positions[index] || 'center'
 
-  function prev() {
-    setIndex((i) => (i - 1 + resolvedImages.length) % resolvedImages.length)
-  }
-  function next() {
-    setIndex((i) => (i + 1) % resolvedImages.length)
-  }
+  function prev() { setIndex((i) => (i - 1 + resolvedImages.length) % resolvedImages.length) }
+  function next() { setIndex((i) => (i + 1) % resolvedImages.length) }
 
   return (
     <div className="flex flex-col bg-surface border border-border rounded-2xl overflow-hidden">
-      {/* Image area */}
       <div
         className="relative h-48 w-full bg-surface flex items-center justify-center border-b border-border group"
-        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}
-        onTouchEnd={(e) => {
-          if (touchStartX.current === null || !hasMultiple) return
+        onTouchStart={!isRepositioning ? (e) => { touchStartX.current = e.touches[0].clientX } : undefined}
+        onTouchEnd={!isRepositioning && hasMultiple ? (e) => {
+          if (touchStartX.current === null) return
           const delta = touchStartX.current - e.changedTouches[0].clientX
           if (Math.abs(delta) > 40) delta > 0 ? next() : prev()
           touchStartX.current = null
-        }}
+        } : undefined}
       >
         {hasImages ? (
-          <Image
+          <DraggableImage
             src={src}
             alt={`${hike.name} ${index + 1}`}
-            fill
-            className="object-cover"
-            style={{ objectPosition }}
             sizes="(max-width: 768px) 100vw, 33vw"
-            unoptimized={src.includes('.gif')}
+            slot={slot}
+            imageIndex={index}
+            allPositions={positions}
+            isRepositioning={isRepositioning}
           />
         ) : (
           <span className="text-[11px] font-mono text-muted opacity-50 tracking-[0.15em] uppercase">
@@ -65,7 +59,7 @@ export default function HikeCard({ hike, resolvedImages = [], positions = [], is
         )}
 
         {/* Prev / Next arrows */}
-        {hasMultiple && (
+        {hasMultiple && !isRepositioning && (
           <>
             <button
               onClick={prev}
@@ -87,7 +81,7 @@ export default function HikeCard({ hike, resolvedImages = [], positions = [], is
         )}
 
         {/* Dot indicators */}
-        {hasMultiple && (
+        {hasMultiple && !isRepositioning && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
             {resolvedImages.map((_, i) => (
               <button
@@ -105,28 +99,38 @@ export default function HikeCard({ hike, resolvedImages = [], positions = [], is
           </div>
         )}
 
+        {/* Reposition hint */}
+        {isRepositioning && (
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 text-[9px] font-mono px-2 py-0.5 rounded-full pointer-events-none z-10"
+            style={{ backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)', color: 'var(--text-muted)' }}
+          >
+            drag to reposition
+          </div>
+        )}
+
         {/* Admin overlay */}
-        {isAdmin && (
-          <>
-            {hasImages && (
-              <div className="absolute bottom-2 left-2 z-10">
-                <PositionPicker
-                  slot={slot}
-                  imageIndex={index}
-                  allPositions={positions}
-                  current={objectPosition}
-                />
-              </div>
-            )}
-            <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
-              {hasImages && <AdminUploadButton slot={slot} label="+" mode="add" />}
-              <AdminUploadButton
-                slot={slot}
-                label={hasImages ? 'Replace' : 'Add photo'}
-                mode="replace"
-              />
-            </div>
-          </>
+        {isAdmin && hasImages && (
+          <div className="absolute bottom-2 left-2 z-10">
+            <button
+              onClick={() => setIsRepositioning((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono rounded-full border transition-colors duration-200"
+              style={{
+                color: isRepositioning ? 'var(--accent)' : 'var(--text-muted)',
+                borderColor: isRepositioning ? 'var(--accent)' : 'var(--border)',
+                backgroundColor: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)',
+              }}
+              aria-label={isRepositioning ? 'Done repositioning' : 'Reposition image'}
+            >
+              {isRepositioning ? <Check size={11} /> : <Move size={11} />}
+              {isRepositioning ? 'Done' : 'Move'}
+            </button>
+          </div>
+        )}
+        {isAdmin && !isRepositioning && (
+          <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+            {hasImages && <AdminUploadButton slot={slot} label="+" mode="add" />}
+            <AdminUploadButton slot={slot} label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
+          </div>
         )}
       </div>
 
@@ -139,16 +143,10 @@ export default function HikeCard({ hike, resolvedImages = [], positions = [], is
           >
             {hike.name}
           </h3>
-          <span className="flex-shrink-0 text-[11px] font-mono text-muted mt-0.5">
-            {hike.year}
-          </span>
+          <span className="flex-shrink-0 text-[11px] font-mono text-muted mt-0.5">{hike.year}</span>
         </div>
-
         <p className="text-xs font-mono text-accent mb-3">{hike.location}</p>
-
-        <p className="text-muted text-sm leading-relaxed flex-1">
-          {hike.description}
-        </p>
+        <p className="text-muted text-sm leading-relaxed flex-1">{hike.description}</p>
       </div>
     </div>
   )
