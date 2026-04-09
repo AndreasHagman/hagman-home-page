@@ -87,6 +87,22 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
 
   return (
     <>
+      {isAdmin && (
+        <div className="fixed top-16 right-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full border text-[11px] font-mono" style={{ color: 'var(--text-muted)', borderColor: 'var(--border)', backgroundColor: 'color-mix(in srgb, var(--bg-surface) 90%, transparent)', backdropFilter: 'blur(8px)' }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+          admin
+          <button
+            onClick={async () => {
+              await fetch('/api/auth/logout', { method: 'POST' })
+              window.location.reload()
+            }}
+            className="ml-1 opacity-50 hover:opacity-100 transition-opacity duration-200"
+            aria-label="Log out"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <ExperiencesSection
         isAdmin={isAdmin}
         experienceImages={experienceImages}
