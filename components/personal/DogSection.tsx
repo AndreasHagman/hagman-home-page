@@ -55,6 +55,23 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
                 She loves being outside and going on walks, but is equally happy
                 curling up in your lap the moment you sit down. The best of both worlds.
               </p>
+              <a
+                href="https://caia.andreashagman.no"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors text-sm font-medium mt-2"
+              >
+                Visit Caia&apos;s page
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </a>
             </div>
           </div>
         </ScrollFade>

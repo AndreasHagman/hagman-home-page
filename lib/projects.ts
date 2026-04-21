@@ -59,4 +59,11 @@ export const projects: Project[] = [
     type: 'repo',
     note: 'MagicMirror² module',
   },
+  {
+    name: 'Meet Caia',
+    description: 'A dedicated webpage for my Nova Scotia Duck Tolling Retriever — photos, milestones, and adventures.',
+    href: 'https://caia.andreashagman.no',
+    tag: 'Personal',
+    type: 'app',
+  },
 ]
