@@ -14,6 +14,7 @@ out/
 .DS_Store
 *.pem
 .claude/
+.storecode/
 
 # debug
 npm-debug.log*
