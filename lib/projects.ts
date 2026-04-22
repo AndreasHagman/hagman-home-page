@@ -65,5 +65,18 @@ export const projects: Project[] = [
     href: 'https://caia.andreashagman.no',
     tag: 'Personal',
     type: 'app',
+    slug: 'caia',
+    techStack: ['Next.js 16', 'TypeScript', 'Firebase', 'Resend', 'Tailwind CSS', 'shadcn/ui'],
+    longDescription: 'A personal web app for tracking the training journey of Caia, a Nova Scotia Duck Tolling Retriever. Log tricks, hikes, and training sessions — with photos and videos. Built as a PWA, so it installs on mobile for quick access.',
+    features: [
+      'Public site — landing page, tricks gallery, photo/video gallery, about page',
+      'Tricks management — create, edit, and track tricks with status, difficulty, and media uploads',
+      'Training logs — per-session notes linked to tricks',
+      'Hikes — log hikes with route, distance, notes, and photos',
+      'Dashboard — owner-only management UI with sub-navigation',
+      'Email + password authentication with forgot password flow',
+      'Invite-only registration — owner sends email invites via Resend with role auto-assignment',
+      'PWA — installable on mobile devices',
+    ],
   },
 ]
