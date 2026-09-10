@@ -9,9 +9,9 @@ export type ListKey = (typeof LIST_KEYS)[number]
 export type FieldType = 'text' | 'number' | 'textarea'
 
 /** Max string length for text fields; one oversized paste cannot blow the 1MB Firestore document limit. */
-const MAX_TEXT_LENGTH = 200
+export const MAX_TEXT_LENGTH = 200
 /** Max string length for textarea fields; one oversized paste cannot blow the 1MB Firestore document limit. */
-const MAX_TEXTAREA_LENGTH = 2000
+export const MAX_TEXTAREA_LENGTH = 2000
 
 export interface FieldSpec {
   key: string
