@@ -45,6 +45,7 @@ function collect(data: Record<string, unknown>, prefix: string, ids: string[]) {
 export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
   const [lists, setLists] = useState<ContentLists>(DEFAULT_LISTS)
   const [slots, setSlots] = useState<Record<string, unknown>>({})
+  const [contentLoaded, setContentLoaded] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -65,9 +66,12 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
       if (results[1].status === 'fulfilled') {
         const listSnap = results[1].value
         setLists(mergeLists(listSnap.exists() ? (listSnap.data() as Record<string, unknown>) : undefined))
+        setContentLoaded(true)
       } else {
         console.error('Failed to fetch content lists:', results[1].reason)
-        setLists(DEFAULT_LISTS)
+        // Do NOT call setLists(DEFAULT_LISTS) — that's already the state,
+        // and resetting to the same object reference would not re-fire effects.
+        // Leave contentLoaded false so editing is blocked.
       }
     }
     load().catch(console.error)
@@ -75,6 +79,8 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
 
   const hike = collect(slots, 'hike', lists.hikes.map((h) => h.id))
   const exp = collect(slots, 'exp', lists.experiences.map((e) => e.id))
+
+  const canEdit = isAdmin && contentLoaded
 
   return (
     <>
@@ -94,9 +100,17 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
           </button>
         </div>
       )}
+      {isAdmin && !contentLoaded && (
+        <div className="max-w-5xl mx-auto px-6 pt-6">
+          <div className="px-4 py-2 rounded-xl border text-[11px] font-mono text-red-400 border-border">
+            Content lists could not be loaded; editing is disabled to avoid overwriting saved data.
+          </div>
+        </div>
+      )}
       <ExperiencesSection
         experiences={lists.experiences}
         isAdmin={isAdmin}
+        canEdit={canEdit}
         images={exp.images}
         positions={exp.positions}
         heights={exp.heights}
@@ -104,6 +118,7 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
       <RacesSection
         races={lists.races}
         isAdmin={isAdmin}
+        canEdit={canEdit}
         resolvedImages={toArray(slots['races'])}
         positions={toArray(slots['races-positions'])}
         initialHeight={toNumber(slots['races-height'])}
@@ -111,6 +126,7 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
       <HikeSection
         hikes={lists.hikes}
         isAdmin={isAdmin}
+        canEdit={canEdit}
         images={hike.images}
         positions={hike.positions}
         heights={hike.heights}

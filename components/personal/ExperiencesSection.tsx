@@ -15,6 +15,7 @@ import type { Experience } from '@/lib/experiences'
 interface ExperiencesSectionProps {
   experiences: Experience[]
   isAdmin?: boolean
+  canEdit?: boolean
   images?: Record<string, string[]>
   positions?: Record<string, string[]>
   heights?: Record<string, number>
@@ -26,6 +27,7 @@ interface ExperienceCardProps {
   imagePositions?: string[]
   initialHeight?: number
   isAdmin?: boolean
+  canEdit?: boolean
   isEditing: boolean
   onEdit: () => void
   onDelete: () => void
@@ -35,7 +37,7 @@ interface ExperienceCardProps {
 }
 
 function ExperienceCard({
-  experience, resolvedImages = [], imagePositions = [], initialHeight, isAdmin,
+  experience, resolvedImages = [], imagePositions = [], initialHeight, isAdmin, canEdit = false,
   isEditing, onEdit, onDelete, onSubmit, onCancel, error,
 }: ExperienceCardProps) {
   const { id, name, location, year, description, tag } = experience
@@ -84,7 +86,7 @@ function ExperienceCard({
             <p className="text-xs font-mono text-muted mb-1">{location}</p>
             <p className="text-muted text-sm leading-relaxed">{description}</p>
 
-            {isAdmin && (
+            {canEdit && (
               <div className="flex items-center gap-1.5 mt-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
                 <button
                   type="button"
@@ -110,7 +112,7 @@ function ExperienceCard({
 }
 
 export default function ExperiencesSection({
-  experiences, isAdmin, images = {}, positions = {}, heights = {},
+  experiences, isAdmin, canEdit = false, images = {}, positions = {}, heights = {},
 }: ExperiencesSectionProps) {
   const { items, error, addItem, updateItem, removeItem } = useEditableList<Experience>('experiences', experiences)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -141,22 +143,23 @@ export default function ExperiencesSection({
                 imagePositions={positions[exp.id]}
                 initialHeight={heights[exp.id]}
                 isAdmin={isAdmin}
+                canEdit={canEdit}
                 isEditing={editingId === exp.id}
                 onEdit={() => setEditingId(exp.id)}
                 onDelete={() => removeItem(exp.id)}
-                onSubmit={(values) => { updateItem(exp.id, values); setEditingId(null) }}
+                onSubmit={async (values) => { if (await updateItem(exp.id, values)) setEditingId(null) }}
                 onCancel={() => setEditingId(null)}
                 error={error}
               />
             </ScrollFade>
           ))}
 
-          {isAdmin && (
+          {canEdit && (
             isAdding ? (
               <ItemEditor
                 fields={FIELDS.experiences}
                 submitLabel="Add experience"
-                onSubmit={(values) => { addItem(values); setIsAdding(false) }}
+                onSubmit={async (values) => { if (await addItem(values)) setIsAdding(false) }}
                 onCancel={() => setIsAdding(false)}
               />
             ) : (

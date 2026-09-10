@@ -12,13 +12,14 @@ import type { Hike } from '@/lib/hikes'
 interface HikeSectionProps {
   hikes: Hike[]
   isAdmin?: boolean
+  canEdit?: boolean
   images?: Record<string, string[]>
   positions?: Record<string, string[]>
   heights?: Record<string, number>
 }
 
 export default function HikeSection({
-  hikes, isAdmin, images = {}, positions = {}, heights = {},
+  hikes, isAdmin, canEdit = false, images = {}, positions = {}, heights = {},
 }: HikeSectionProps) {
   const { items, error, addItem, updateItem, removeItem } = useEditableList<Hike>('hikes', hikes)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -49,17 +50,18 @@ export default function HikeSection({
                 positions={positions[hike.id]}
                 initialHeight={heights[hike.id]}
                 isAdmin={isAdmin}
+                canEdit={canEdit}
                 isEditing={editingId === hike.id}
                 onEdit={() => setEditingId(hike.id)}
                 onDelete={() => removeItem(hike.id)}
-                onSubmit={(values) => { updateItem(hike.id, values); setEditingId(null) }}
+                onSubmit={async (values) => { if (await updateItem(hike.id, values)) setEditingId(null) }}
                 onCancel={() => setEditingId(null)}
                 error={error}
               />
             </ScrollFade>
           ))}
 
-          {isAdmin && !isAdding && (
+          {canEdit && !isAdding && (
             <button
               type="button"
               onClick={() => setIsAdding(true)}
@@ -70,12 +72,12 @@ export default function HikeSection({
           )}
         </div>
 
-        {isAdmin && isAdding && (
+        {canEdit && isAdding && (
           <div className="mt-5">
             <ItemEditor
               fields={FIELDS.hikes}
               submitLabel="Add hike"
-              onSubmit={(values) => { addItem(values); setIsAdding(false) }}
+              onSubmit={async (values) => { if (await addItem(values)) setIsAdding(false) }}
               onCancel={() => setIsAdding(false)}
             />
           </div>

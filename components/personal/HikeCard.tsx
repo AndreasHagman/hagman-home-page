@@ -16,6 +16,7 @@ interface HikeCardProps {
   positions?: string[]
   initialHeight?: number
   isAdmin?: boolean
+  canEdit?: boolean
   isEditing?: boolean
   onEdit?: () => void
   onDelete?: () => void
@@ -25,7 +26,7 @@ interface HikeCardProps {
 }
 
 export default function HikeCard({
-  hike, resolvedImages = [], positions = [], initialHeight, isAdmin,
+  hike, resolvedImages = [], positions = [], initialHeight, isAdmin, canEdit = false,
   isEditing = false, onEdit, onDelete, onSubmit, onCancel, error,
 }: HikeCardProps) {
   const slot = SLOTS.hike(hike.id)
@@ -66,7 +67,7 @@ export default function HikeCard({
           <p className="text-xs font-mono text-accent mb-3">{hike.location}</p>
           <p className="text-muted text-sm leading-relaxed flex-1">{hike.description}</p>
 
-          {isAdmin && (
+          {canEdit && (
             <div className="flex items-center gap-1.5 mt-4 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
               <button
                 type="button"

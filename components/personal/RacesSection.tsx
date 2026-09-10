@@ -17,13 +17,14 @@ const VISIBLE_LIMIT = 5
 interface RacesSectionProps {
   races: Race[]
   isAdmin?: boolean
+  canEdit?: boolean
   resolvedImages?: string[]
   positions?: string[]
   initialHeight?: number
 }
 
 export default function RacesSection({
-  races, isAdmin, resolvedImages = [], positions = [], initialHeight,
+  races, isAdmin, canEdit = false, resolvedImages = [], positions = [], initialHeight,
 }: RacesSectionProps) {
   const { items, error, addItem, updateItem, removeItem } = useEditableList<Race>('races', races)
   const [expanded, setExpanded] = useState(false)
@@ -75,7 +76,7 @@ export default function RacesSection({
                       fields={FIELDS.races}
                       initial={race}
                       submitLabel="Save"
-                      onSubmit={(values) => { updateItem(race.id, values); setEditingId(null) }}
+                      onSubmit={async (values) => { if (await updateItem(race.id, values)) setEditingId(null) }}
                       onCancel={() => setEditingId(null)}
                     />
                   ) : (
@@ -93,7 +94,7 @@ export default function RacesSection({
                       {race.note && (
                         <span className="text-[11px] font-mono text-muted opacity-60">{race.note}</span>
                       )}
-                      {isAdmin && (
+                      {canEdit && (
                         <span className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
                           <button
                             type="button"
@@ -117,7 +118,7 @@ export default function RacesSection({
                 </div>
               ))}
 
-              {!isAdmin && overLimit && (
+              {!canEdit && overLimit && (
                 <button
                   type="button"
                   onClick={() => setExpanded((v) => !v)}
@@ -127,12 +128,12 @@ export default function RacesSection({
                 </button>
               )}
 
-              {isAdmin && (
+              {canEdit && (
                 isAdding ? (
                   <ItemEditor
                     fields={FIELDS.races}
                     submitLabel="Add race"
-                    onSubmit={(values) => { addItem(values); setIsAdding(false) }}
+                    onSubmit={async (values) => { if (await addItem(values)) setIsAdding(false) }}
                     onCancel={() => setIsAdding(false)}
                   />
                 ) : (
