@@ -19,8 +19,14 @@ app/
   globals.css            — CSS variables, keyframe animations, utility classes
   personal/page.tsx      — /personal page (async server component, checks admin cookie)
   admin/page.tsx         — Admin login form (client component)
-  api/auth/login/        — POST: validates ADMIN_PASSWORD, sets httpOnly cookie
+  projects/[slug]/       — Per-project detail page (server component; screenshots from personal-images/slots)
+  api/auth/login/        — POST: rate-limits by IP, verifies a Firebase ID token, checks the
+                           email/phone against the ADMIN_EMAIL / ADMIN_PHONE allowlists, and
+                           sets the minted Firebase session cookie as httpOnly `admin_session`
+  api/auth/logout/       — POST: revokes the session's refresh tokens and clears the cookie
   api/admin/content/     — PATCH: saves content lists to personal-content/lists
+  api/admin/slots/       — PATCH: saves image slots to personal-images/slots (`key__append` pushes)
+  api/upload/            — POST: legacy local-disk upload to public/images/personal (unused by the UI)
 
 components/
   Navbar.tsx             — Fixed top nav, blur-glass on scroll, mobile hamburger, theme toggle
@@ -41,6 +47,7 @@ components/personal/
   HikeCard.tsx           — Individual hike card with image carousel ('use client')
   DogSection.tsx         — Caia section with image carousel ('use client')
   PersonalImages.tsx     — Fetches personal-images/slots and personal-content/lists from Firestore, renders sections
+  ImageCarousel.tsx      — Slot image viewer: arrows, dots, swipe, and the admin image controls
   ItemEditor.tsx         — Add/edit form rendered from a lib/content.ts field schema
   DeleteItemButton.tsx   — Trash button that arms to 'Sure?' before deleting; disarms on blur
   ListError.tsx          — Error display for editable list save failures
@@ -51,6 +58,7 @@ components/personal/
 hooks/
   useScrollFade.ts       — IntersectionObserver hook used by ScrollFade
   useEditableList.ts     — Optimistic state + saving for one editable content list
+  useImageGallery.ts     — Carousel state for one slot: index, height, reorder, delete, swipe
 
 lib/
   projects.ts            — Project data array (add new apps here)
@@ -58,7 +66,9 @@ lib/
   hikes.ts               — Hike seed data (fallback only — see "Adding a race, hike or experience")
   experiences.ts         — Experience seed data (fallback only — see "Adding a race, hike or experience")
   content.ts             — List keys, field schemas, id generation, validation, fallback merge
+  slots.ts               — Slot key builders (hike-/exp-/project-, caia, races) and toSlug
   firebase.ts            — Firebase app init (guards against re-init), exports db and storage
+  firebase-admin.ts      — Server-only Firebase Admin init, exports adminDb and adminAuth
 ```
 
 See [docs/design.md](docs/design.md) for design system details.
@@ -98,9 +108,11 @@ regenerates the same id and silently inherits its old photos.
 ## /personal page architecture
 
 - `app/personal/page.tsx` — async server component; reads `admin_session` httpOnly cookie; passes `isAdmin` to `PersonalImages`
-- `PersonalImages` — client component; fetches `personal-images/slots` and `personal-content/lists` from Firestore on mount; resolves images/positions/heights for every hike, experience, and Caia; merges content lists over seed data using `mergeLists`; passes both `isAdmin` (for image editing) and `canEdit={isAdmin && contentLoaded}` (for content editing) to the three content sections; renders a banner when content load fails
-- The three content sections (`RacesSection`, `HikeSection`, `ExperiencesSection`) use `useEditableList` to manage optimistic state and saving for their lists; forms close only on successful save
-- Admin controls for images (upload, drag-reposition, height) are only rendered when `isAdmin=true`; admin controls for content (edit, delete, add) are only rendered when `canEdit=true`
+- `PersonalImages` — client component; fetches `personal-images/slots` and `personal-content/lists` from Firestore on mount; resolves images/positions/heights for every hike, experience, and Caia; merges content lists over seed data using `mergeLists`; passes `isAdmin` (for image editing), `canEdit` (for content editing) and `canReplace` (for photo replacement) down to the sections
+- Each read has its own `'loading' | 'loaded' | 'failed'` status. `canEdit = isAdmin && contentStatus === 'loaded'`; `canReplace = slotsStatus !== 'failed'`. Nothing is reported as failed while a read is still pending, so no banner appears on a normal page load
+- A *degraded* lists read — `mergeLists` reporting that stored items were dropped as invalid or truncated — resolves to `'failed'` too: the dropped items are still in Firestore and every save writes a whole list, so editing must stay off
+- The three content sections (`RacesSection`, `HikeSection`, `ExperiencesSection`) use `useEditableList` to manage optimistic state and saving for their lists; forms close only on successful save, and only if they are still the open editor
+- Admin controls for images (upload, drag-reposition, height) are only rendered when `isAdmin=true`; admin controls for content (edit, delete, add) are only rendered when `canEdit=true`; the replace-mode upload button additionally needs `canReplace=true`
 
 ## Firestore schema
 
@@ -114,6 +126,9 @@ Single document: `personal-images/slots`
 | `exp-{slug}` | `string[]` | Image URLs for an experience card |
 | `exp-{slug}-positions` | `string[]` | Focal points |
 | `exp-{slug}-height` | `number` | Card image height in px |
+| `races` | `string[]` | Race section image URLs |
+| `races-positions` | `string[]` | Focal points |
+| `races-height` | `number` | Image height in px |
 | `caia` | `string[]` | Caia image URLs |
 | `caia-positions` | `string[]` | Focal points |
 | `caia-height` | `number` | Image height in px |
