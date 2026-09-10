@@ -5,5 +5,9 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false; // All writes go through /api/admin/slots (Firebase Admin SDK)
     }
+    match /personal-content/{document=**} {
+      allow read: if true;
+      allow write: if false; // All writes go through /api/admin/content (Firebase Admin SDK)
+    }
   }
 }
