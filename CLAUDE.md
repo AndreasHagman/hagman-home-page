@@ -35,9 +35,9 @@ components/
 components/personal/
   PersonalHero.tsx       — Hero section for /personal
   HobbySection.tsx       — Hobby/interest tags
-  RacesSection.tsx       — Race list: newest first, capped at 5 for visitors; takes prop
-  ExperiencesSection.tsx — "Things I've done" cards; takes prop
-  HikeSection.tsx        — Grid of hike cards; takes prop
+  RacesSection.tsx       — Race list: newest first, capped at 5 for visitors; list comes in as a prop
+  ExperiencesSection.tsx — "Things I've done" cards; list comes in as a prop
+  HikeSection.tsx        — Grid of hike cards; list comes in as a prop
   HikeCard.tsx           — Individual hike card with image carousel ('use client')
   DogSection.tsx         — Caia section with image carousel ('use client')
   PersonalImages.tsx     — Fetches personal-images/slots and personal-content/lists from Firestore, renders sections

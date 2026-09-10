@@ -33,7 +33,9 @@ export default function RacesSection({
 
   const sorted = [...items].sort((a, b) => b.year - a.year)
   const overLimit = sorted.length > VISIBLE_LIMIT
-  const isCapped = !isAdmin && overLimit && !expanded
+  // Keyed on canEdit, not isAdmin, so it stays in step with the Show all button
+  // below: an admin whose content load failed gets the visitor view, cap included.
+  const isCapped = !canEdit && overLimit && !expanded
   const visible = isCapped ? sorted.slice(0, VISIBLE_LIMIT) : sorted
 
   return (
