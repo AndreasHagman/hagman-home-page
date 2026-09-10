@@ -8,6 +8,11 @@ export type ListKey = (typeof LIST_KEYS)[number]
 
 export type FieldType = 'text' | 'number' | 'textarea'
 
+/** Max string length for text fields; one oversized paste cannot blow the 1MB Firestore document limit. */
+const MAX_TEXT_LENGTH = 200
+/** Max string length for textarea fields; one oversized paste cannot blow the 1MB Firestore document limit. */
+const MAX_TEXTAREA_LENGTH = 2000
+
 export interface FieldSpec {
   key: string
   label: string
@@ -77,6 +82,7 @@ export function sanitizeList(key: ListKey, value: unknown): Record<string, strin
 
     const id = typeof item.id === 'string' ? item.id.trim() : ''
     if (!id) throw new Error(`${key}[${i}] is missing "id"`)
+    if (id.length > MAX_TEXT_LENGTH) throw new Error(`${key}[${i}].id must be ${MAX_TEXT_LENGTH} characters or fewer`)
     if (seen.has(id)) throw new Error(`${key} has a duplicate id: "${id}"`)
     seen.add(id)
 
@@ -86,7 +92,21 @@ export function sanitizeList(key: ListKey, value: unknown): Record<string, strin
       const fieldValue = item[field.key]
 
       if (field.type === 'number') {
-        const n = typeof fieldValue === 'number' ? fieldValue : Number(fieldValue)
+        // Only accept actual finite numbers or numeric strings (not null, false, [], etc.)
+        let n: number
+        if (typeof fieldValue === 'number') {
+          n = fieldValue
+        } else if (typeof fieldValue === 'string') {
+          const trimmed = fieldValue.trim()
+          if (!trimmed) {
+            if (field.required) throw new Error(`${key}[${i}].${field.key} must be a number`)
+            continue
+          }
+          n = Number(trimmed)
+        } else {
+          if (field.required) throw new Error(`${key}[${i}].${field.key} must be a number`)
+          continue
+        }
         if (!Number.isFinite(n)) {
           if (field.required) throw new Error(`${key}[${i}].${field.key} must be a number`)
           continue
@@ -99,6 +119,10 @@ export function sanitizeList(key: ListKey, value: unknown): Record<string, strin
       if (!s) {
         if (field.required) throw new Error(`${key}[${i}].${field.key} is required`)
         continue
+      }
+      const max = field.type === 'textarea' ? MAX_TEXTAREA_LENGTH : MAX_TEXT_LENGTH
+      if (s.length > max) {
+        throw new Error(`${key}[${i}].${field.key} must be ${max} characters or fewer`)
       }
       out[field.key] = s
     }
