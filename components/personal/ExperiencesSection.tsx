@@ -58,49 +58,53 @@ function ExperienceCard({
       </div>
 
       {/* Content */}
-      {isEditing ? (
-        <div className="flex-1 p-2">
-          <ItemEditor
-            fields={FIELDS.experiences}
-            initial={experience}
-            submitLabel="Save"
-            onSubmit={onSubmit}
-            onCancel={onCancel}
-          />
-        </div>
-      ) : (
-        <div className="group flex-1 p-5 flex flex-col gap-1.5">
-          <span className="text-[10px] font-mono text-accent tracking-[0.15em] uppercase">{tag}</span>
-          <div className="flex items-start justify-between gap-3">
-            <h3
-              className="font-display text-lg text-foreground leading-tight"
-              style={{ fontVariationSettings: "'opsz' 20, 'wght' 500, 'SOFT' 15" }}
-            >
-              {name}
-            </h3>
-            <span className="flex-shrink-0 text-[11px] font-mono text-muted mt-0.5">{year}</span>
+      <div className="flex-1 min-w-0 flex flex-col">
+        {isEditing ? (
+          <div className="p-2">
+            <ItemEditor
+              fields={FIELDS.experiences}
+              initial={experience}
+              submitLabel="Save"
+              onSubmit={onSubmit}
+              onCancel={onCancel}
+            />
           </div>
-          <p className="text-xs font-mono text-muted mb-1">{location}</p>
-          <p className="text-muted text-sm leading-relaxed">{description}</p>
-
-          {isAdmin && (
-            <div className="flex items-center gap-1.5 mt-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
-              <button
-                type="button"
-                onClick={onEdit}
-                className="w-6 h-6 rounded-full border flex items-center justify-center transition-colors duration-200 hover:border-accent hover:text-accent"
-                style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}
-                aria-label={`Edit ${name}`}
+        ) : (
+          <div className="group flex-1 p-5 flex flex-col gap-1.5">
+            <span className="text-[10px] font-mono text-accent tracking-[0.15em] uppercase">{tag}</span>
+            <div className="flex items-start justify-between gap-3">
+              <h3
+                className="font-display text-lg text-foreground leading-tight"
+                style={{ fontVariationSettings: "'opsz' 20, 'wght' 500, 'SOFT' 15" }}
               >
-                <Pencil size={11} />
-              </button>
-              <DeleteItemButton onConfirm={onDelete} label={`Delete ${name}`} />
+                {name}
+              </h3>
+              <span className="flex-shrink-0 text-[11px] font-mono text-muted mt-0.5">{year}</span>
             </div>
-          )}
+            <p className="text-xs font-mono text-muted mb-1">{location}</p>
+            <p className="text-muted text-sm leading-relaxed">{description}</p>
 
-          <ListError error={error} itemId={id} className="mt-2" />
-        </div>
-      )}
+            {isAdmin && (
+              <div className="flex items-center gap-1.5 mt-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="w-6 h-6 rounded-full border flex items-center justify-center transition-colors duration-200 hover:border-accent hover:text-accent"
+                  style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}
+                  aria-label={`Edit ${name}`}
+                >
+                  <Pencil size={11} />
+                </button>
+                <DeleteItemButton onConfirm={onDelete} label={`Delete ${name}`} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Outside the editing branch, so a failed save stays visible when the
+            admin reopens the editor to retry. */}
+        <ListError error={error} itemId={id} className="px-5 pb-4" />
+      </div>
     </div>
   )
 }
