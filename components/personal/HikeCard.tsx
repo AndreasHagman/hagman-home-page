@@ -17,16 +17,17 @@ interface HikeCardProps {
   initialHeight?: number
   isAdmin?: boolean
   canEdit?: boolean
+  canReplace?: boolean
   isEditing?: boolean
   onEdit?: () => void
   onDelete?: () => void
-  onSubmit?: (values: Record<string, string | number>) => void
+  onSubmit?: (values: Record<string, string | number>) => void | Promise<unknown>
   onCancel?: () => void
   error?: EditableListError | null
 }
 
 export default function HikeCard({
-  hike, resolvedImages = [], positions = [], initialHeight, isAdmin, canEdit = false,
+  hike, resolvedImages = [], positions = [], initialHeight, isAdmin, canEdit = false, canReplace = true,
   isEditing = false, onEdit, onDelete, onSubmit, onCancel, error,
 }: HikeCardProps) {
   const slot = SLOTS.hike(hike.id)
@@ -42,6 +43,7 @@ export default function HikeCard({
         alt={hike.name}
         sizes="(max-width: 768px) 100vw, 33vw"
         isAdmin={isAdmin}
+        canReplace={canReplace}
         className="border-b border-border"
       />
 

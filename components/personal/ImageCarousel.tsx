@@ -15,6 +15,8 @@ interface ImageCarouselProps {
   alt: string
   sizes: string
   isAdmin?: boolean
+  /** False when this slot's stored URLs could not be read; replacing would overwrite photos we cannot see. */
+  canReplace?: boolean
   /** Use smaller controls for narrow image panels (e.g. ExperienceCard) */
   compact?: boolean
   className?: string
@@ -22,7 +24,7 @@ interface ImageCarouselProps {
 
 export default function ImageCarousel({
   slot, resolvedImages = [], positions = [], initialHeight, defaultHeight,
-  alt, sizes, isAdmin, compact = false, className = '',
+  alt, sizes, isAdmin, canReplace = true, compact = false, className = '',
 }: ImageCarouselProps) {
   const {
     index, setIndex, isRepositioning, setIsRepositioning,
@@ -176,7 +178,7 @@ export default function ImageCarousel({
           )}
 
           {/* Bottom-right: delete + upload */}
-          {!isRepositioning && (
+          {!isRepositioning && (hasImages || canReplace) && (
             <div style={{ ...BR, display: 'flex', gap: '6px' }}>
               {hasImages && (
                 <button
@@ -189,7 +191,9 @@ export default function ImageCarousel({
                 </button>
               )}
               {hasImages && <AdminUploadButton slot={slot} label="+" mode="add" />}
-              <AdminUploadButton slot={slot} label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
+              {canReplace && (
+                <AdminUploadButton slot={slot} label={hasImages ? 'Replace' : 'Add photo'} mode="replace" />
+              )}
             </div>
           )}
         </>

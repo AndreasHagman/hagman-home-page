@@ -16,6 +16,7 @@ interface ExperiencesSectionProps {
   experiences: Experience[]
   isAdmin?: boolean
   canEdit?: boolean
+  canReplace?: boolean
   images?: Record<string, string[]>
   positions?: Record<string, string[]>
   heights?: Record<string, number>
@@ -28,16 +29,17 @@ interface ExperienceCardProps {
   initialHeight?: number
   isAdmin?: boolean
   canEdit?: boolean
+  canReplace?: boolean
   isEditing: boolean
   onEdit: () => void
   onDelete: () => void
-  onSubmit: (values: Record<string, string | number>) => void
+  onSubmit: (values: Record<string, string | number>) => void | Promise<unknown>
   onCancel: () => void
   error?: EditableListError | null
 }
 
 function ExperienceCard({
-  experience, resolvedImages = [], imagePositions = [], initialHeight, isAdmin, canEdit = false,
+  experience, resolvedImages = [], imagePositions = [], initialHeight, isAdmin, canEdit = false, canReplace = true,
   isEditing, onEdit, onDelete, onSubmit, onCancel, error,
 }: ExperienceCardProps) {
   const { id, name, location, year, description, tag } = experience
@@ -55,6 +57,7 @@ function ExperienceCard({
           alt={name}
           sizes="(max-width: 640px) 100vw, 160px"
           isAdmin={isAdmin}
+          canReplace={canReplace}
           compact
         />
       </div>
@@ -112,7 +115,7 @@ function ExperienceCard({
 }
 
 export default function ExperiencesSection({
-  experiences, isAdmin, canEdit = false, images = {}, positions = {}, heights = {},
+  experiences, isAdmin, canEdit = false, canReplace = true, images = {}, positions = {}, heights = {},
 }: ExperiencesSectionProps) {
   const { items, error, addItem, updateItem, removeItem } = useEditableList<Experience>('experiences', experiences)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -144,10 +147,15 @@ export default function ExperiencesSection({
                 initialHeight={heights[exp.id]}
                 isAdmin={isAdmin}
                 canEdit={canEdit}
+                canReplace={canReplace}
                 isEditing={editingId === exp.id}
                 onEdit={() => setEditingId(exp.id)}
                 onDelete={() => removeItem(exp.id)}
-                onSubmit={async (values) => { if (await updateItem(exp.id, values)) setEditingId(null) }}
+                onSubmit={async (values) => {
+                  // Close only this editor: a slow save must not close one the
+                  // admin opened while it was in flight, discarding what they typed.
+                  if (await updateItem(exp.id, values)) setEditingId((cur) => (cur === exp.id ? null : cur))
+                }}
                 onCancel={() => setEditingId(null)}
                 error={error}
               />

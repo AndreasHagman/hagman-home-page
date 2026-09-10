@@ -13,13 +13,14 @@ interface HikeSectionProps {
   hikes: Hike[]
   isAdmin?: boolean
   canEdit?: boolean
+  canReplace?: boolean
   images?: Record<string, string[]>
   positions?: Record<string, string[]>
   heights?: Record<string, number>
 }
 
 export default function HikeSection({
-  hikes, isAdmin, canEdit = false, images = {}, positions = {}, heights = {},
+  hikes, isAdmin, canEdit = false, canReplace = true, images = {}, positions = {}, heights = {},
 }: HikeSectionProps) {
   const { items, error, addItem, updateItem, removeItem } = useEditableList<Hike>('hikes', hikes)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -51,10 +52,15 @@ export default function HikeSection({
                 initialHeight={heights[hike.id]}
                 isAdmin={isAdmin}
                 canEdit={canEdit}
+                canReplace={canReplace}
                 isEditing={editingId === hike.id}
                 onEdit={() => setEditingId(hike.id)}
                 onDelete={() => removeItem(hike.id)}
-                onSubmit={async (values) => { if (await updateItem(hike.id, values)) setEditingId(null) }}
+                onSubmit={async (values) => {
+                  // Close only this editor: a slow save must not close one the
+                  // admin opened while it was in flight, discarding what they typed.
+                  if (await updateItem(hike.id, values)) setEditingId((cur) => (cur === hike.id ? null : cur))
+                }}
                 onCancel={() => setEditingId(null)}
                 error={error}
               />

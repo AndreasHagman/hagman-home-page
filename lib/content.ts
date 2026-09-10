@@ -71,16 +71,24 @@ export function makeId(name: string, existingIds: string[]): string {
  * Validate an incoming list and strip it to the schema in FIELDS.
  * When `strict` is true, throws with a human-readable message describing the first problem found.
  * When `strict` is false, drops invalid items and logs errors, returning only valid items.
+ * Callers can detect a non-strict drop by comparing the result length to the input length.
  */
 export function sanitizeList(key: ListKey, value: unknown, strict = true): Record<string, string | number>[] {
   if (!Array.isArray(value)) throw new Error(`"${key}" must be an array`)
-  if (value.length > MAX_LIST_LENGTH) throw new Error(`"${key}" must have at most ${MAX_LIST_LENGTH} items`)
+  if (strict && value.length > MAX_LIST_LENGTH) {
+    throw new Error(`"${key}" must have at most ${MAX_LIST_LENGTH} items`)
+  }
+
+  // Non-strict callers truncate rather than throw: a throw here would escape the
+  // per-item try below and take the whole stored list with it, leaving the reader
+  // with seed data it might then save over the real thing.
+  const input = strict ? value : value.slice(0, MAX_LIST_LENGTH)
 
   const seen = new Set<string>()
   const result: Record<string, string | number>[] = []
 
-  for (let i = 0; i < value.length; i++) {
-    const raw = value[i]
+  for (let i = 0; i < input.length; i++) {
+    const raw = input[i]
 
     try {
       if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
@@ -146,24 +154,50 @@ export function sanitizeList(key: ListKey, value: unknown, strict = true): Recor
   return result
 }
 
-function readList<T>(key: ListKey, data: Record<string, unknown> | undefined, fallback: T[]): T[] {
+interface ReadResult<T> {
+  items: T[]
+  degraded: boolean
+}
+
+function readList<T>(key: ListKey, data: Record<string, unknown> | undefined, fallback: T[]): ReadResult<T> {
   const value = data?.[key]
-  if (!Array.isArray(value)) return fallback
+  // Nothing stored for this list: the seed is the intended content, not a loss.
+  if (value === undefined || value === null) return { items: fallback, degraded: false }
+
+  if (!Array.isArray(value)) {
+    console.error(`Failed to read list "${key}": stored value is not an array`)
+    return { items: fallback, degraded: true }
+  }
+
   try {
     // Use non-strict mode to drop invalid items individually rather than failing the entire list
-    return sanitizeList(key, value, false) as unknown as T[]
+    const items = sanitizeList(key, value, false) as unknown as T[]
+    return { items, degraded: items.length < value.length }
   } catch (err) {
-    // If the entire array is malformed (not an array), use fallback.
     console.error(`Failed to read list "${key}":`, err)
-    return fallback
+    return { items: fallback, degraded: true }
   }
 }
 
+export interface MergedLists {
+  lists: ContentLists
+  /**
+   * True when the stored document was read incompletely — items dropped as invalid,
+   * a list truncated at MAX_LIST_LENGTH, or a stored value that is not an array.
+   * What is missing here is still in Firestore, and every save writes a whole list,
+   * so saving a degraded list would delete it for good.
+   */
+  degraded: boolean
+}
+
 /** Merge a `personal-content/lists` snapshot over the seed data, per list. */
-export function mergeLists(data?: Record<string, unknown>): ContentLists {
+export function mergeLists(data?: Record<string, unknown>): MergedLists {
+  const races = readList<Race>('races', data, DEFAULT_LISTS.races)
+  const hikes = readList<Hike>('hikes', data, DEFAULT_LISTS.hikes)
+  const experiences = readList<Experience>('experiences', data, DEFAULT_LISTS.experiences)
+
   return {
-    races: readList<Race>('races', data, DEFAULT_LISTS.races),
-    hikes: readList<Hike>('hikes', data, DEFAULT_LISTS.hikes),
-    experiences: readList<Experience>('experiences', data, DEFAULT_LISTS.experiences),
+    lists: { races: races.items, hikes: hikes.items, experiences: experiences.items },
+    degraded: races.degraded || hikes.degraded || experiences.degraded,
   }
 }

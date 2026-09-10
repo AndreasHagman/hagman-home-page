@@ -18,13 +18,14 @@ interface RacesSectionProps {
   races: Race[]
   isAdmin?: boolean
   canEdit?: boolean
+  canReplace?: boolean
   resolvedImages?: string[]
   positions?: string[]
   initialHeight?: number
 }
 
 export default function RacesSection({
-  races, isAdmin, canEdit = false, resolvedImages = [], positions = [], initialHeight,
+  races, isAdmin, canEdit = false, canReplace = true, resolvedImages = [], positions = [], initialHeight,
 }: RacesSectionProps) {
   const { items, error, addItem, updateItem, removeItem } = useEditableList<Race>('races', races)
   const [expanded, setExpanded] = useState(false)
@@ -66,6 +67,7 @@ export default function RacesSection({
                 alt="Race photo"
                 sizes="256px"
                 isAdmin={isAdmin}
+                canReplace={canReplace}
               />
             </div>
 
@@ -78,7 +80,11 @@ export default function RacesSection({
                       fields={FIELDS.races}
                       initial={race}
                       submitLabel="Save"
-                      onSubmit={async (values) => { if (await updateItem(race.id, values)) setEditingId(null) }}
+                      onSubmit={async (values) => {
+                        // Close only this editor: a slow save must not close one the
+                        // admin opened while it was in flight, discarding what they typed.
+                        if (await updateItem(race.id, values)) setEditingId((cur) => (cur === race.id ? null : cur))
+                      }}
                       onCancel={() => setEditingId(null)}
                     />
                   ) : (

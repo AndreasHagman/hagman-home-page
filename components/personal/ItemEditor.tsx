@@ -8,7 +8,7 @@ interface ItemEditorProps {
   fields: FieldSpec[]
   initial?: object
   submitLabel: string
-  onSubmit: (values: Record<string, string | number>) => void
+  onSubmit: (values: Record<string, string | number>) => void | Promise<unknown>
   onCancel: () => void
 }
 
@@ -24,15 +24,20 @@ export default function ItemEditor({ fields, initial, submitLabel, onSubmit, onC
     )
   })
 
+  // The form stays mounted until the save succeeds, so without this a second
+  // click during the round trip would submit the same values again — and "add"
+  // is not idempotent: it would create a duplicate item under a suffixed id.
+  const [submitting, setSubmitting] = useState(false)
+
   const incomplete = fields.some((field) => field.required && !values[field.key].trim())
 
   function set(key: string, value: string) {
     setValues((current) => ({ ...current, [key]: value }))
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (incomplete) return
+    if (incomplete || submitting) return
 
     const out: Record<string, string | number> = {}
     for (const field of fields) {
@@ -40,7 +45,13 @@ export default function ItemEditor({ fields, initial, submitLabel, onSubmit, onC
       if (!raw) continue
       out[field.key] = field.type === 'number' ? Number(raw) : raw
     }
-    onSubmit(out)
+
+    setSubmitting(true)
+    try {
+      await onSubmit(out)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -83,7 +94,7 @@ export default function ItemEditor({ fields, initial, submitLabel, onSubmit, onC
       <div className="flex items-center gap-2">
         <button
           type="submit"
-          disabled={incomplete}
+          disabled={incomplete || submitting}
           className="px-4 py-1.5 rounded-full bg-accent text-background text-[11px] font-mono tracking-[0.1em] uppercase transition-opacity duration-200 hover:opacity-90 disabled:opacity-40"
         >
           {submitLabel}

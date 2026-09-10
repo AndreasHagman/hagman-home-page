@@ -6,12 +6,13 @@ import { SLOTS } from '@/lib/slots'
 
 interface DogSectionProps {
   isAdmin?: boolean
+  canReplace?: boolean
   resolvedImages?: string[]
   positions?: string[]
   initialHeight?: number
 }
 
-export default function DogSection({ isAdmin, resolvedImages = [], positions = [], initialHeight }: DogSectionProps) {
+export default function DogSection({ isAdmin, canReplace = true, resolvedImages = [], positions = [], initialHeight }: DogSectionProps) {
   return (
     <section className="py-16 border-t border-border">
       <div className="max-w-5xl mx-auto px-6">
@@ -40,6 +41,7 @@ export default function DogSection({ isAdmin, resolvedImages = [], positions = [
                 alt="Caia"
                 sizes="256px"
                 isAdmin={isAdmin}
+                canReplace={canReplace}
               />
             </div>
 
