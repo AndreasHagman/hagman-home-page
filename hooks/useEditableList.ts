@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { makeId, type ListKey } from '@/lib/content'
 
 export interface EditableListError {
@@ -15,29 +15,49 @@ export function useEditableList<T extends { id: string }>(listKey: ListKey, init
   const [items, setItems] = useState<T[]>(initial)
   const [error, setError] = useState<EditableListError | null>(null)
 
+  const persistedRef = useRef<T[]>(initial)
+  const saveChainRef = useRef<Promise<void>>(Promise.resolve())
+  const itemsRef = useRef<T[]>(initial)
+
   useEffect(() => {
     setItems(initial)
+    persistedRef.current = initial
+    itemsRef.current = initial
   }, [initial])
 
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
+
   async function save(next: T[], itemId: string | null) {
-    const previous = items
     setItems(next)
     setError(null)
 
-    try {
-      const res = await fetch('/api/admin/content', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [listKey]: next }),
-      })
-      if (!res.ok) {
-        setItems(previous)
-        setError({ itemId, message: res.status === 401 ? SESSION_EXPIRED : SAVE_FAILED })
+    saveChainRef.current = saveChainRef.current.then(async () => {
+      const toSave = itemsRef.current
+
+      try {
+        const res = await fetch('/api/admin/content', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [listKey]: toSave }),
+        })
+        if (!res.ok) {
+          setItems(persistedRef.current)
+          setError({ itemId, message: res.status === 401 ? SESSION_EXPIRED : SAVE_FAILED })
+          saveChainRef.current = Promise.resolve()
+        } else {
+          persistedRef.current = toSave
+          setError(null)
+        }
+      } catch {
+        setItems(persistedRef.current)
+        setError({ itemId, message: SAVE_FAILED })
+        saveChainRef.current = Promise.resolve()
       }
-    } catch {
-      setItems(previous)
-      setError({ itemId, message: SAVE_FAILED })
-    }
+    })
+
+    await saveChainRef.current
   }
 
   async function addItem(values: Record<string, string | number>) {
