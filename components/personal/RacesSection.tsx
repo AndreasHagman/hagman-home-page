@@ -3,16 +3,17 @@
 import ScrollFade from '@/components/ScrollFade'
 import ImageCarousel from './ImageCarousel'
 import { SLOTS } from '@/lib/slots'
-import { races } from '@/lib/races'
+import type { Race } from '@/lib/races'
 
 interface RacesSectionProps {
+  races: Race[]
   isAdmin?: boolean
   resolvedImages?: string[]
   positions?: string[]
   initialHeight?: number
 }
 
-export default function RacesSection({ isAdmin, resolvedImages = [], positions = [], initialHeight }: RacesSectionProps) {
+export default function RacesSection({ races, isAdmin, resolvedImages = [], positions = [], initialHeight }: RacesSectionProps) {
   return (
     <section className="py-16 border-t border-border">
       <div className="max-w-5xl mx-auto px-6">

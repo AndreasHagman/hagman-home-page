@@ -1,15 +1,16 @@
-import { hikes } from '@/lib/hikes'
 import HikeCard from './HikeCard'
 import ScrollFade from '@/components/ScrollFade'
+import type { Hike } from '@/lib/hikes'
 
 interface HikeSectionProps {
+  hikes: Hike[]
   isAdmin?: boolean
-  hikeImages?: Record<string, string[]>
-  hikePositions?: Record<string, string[]>
-  hikeHeights?: Record<string, number>
+  images?: Record<string, string[]>
+  positions?: Record<string, string[]>
+  heights?: Record<string, number>
 }
 
-export default function HikeSection({ isAdmin, hikeImages = {}, hikePositions = {}, hikeHeights = {} }: HikeSectionProps) {
+export default function HikeSection({ hikes, isAdmin, images = {}, positions = {}, heights = {} }: HikeSectionProps) {
   return (
     <section className="py-16 border-t border-border">
       <div className="max-w-5xl mx-auto px-6">
@@ -31,9 +32,9 @@ export default function HikeSection({ isAdmin, hikeImages = {}, hikePositions = 
             <ScrollFade key={hike.id} delay={i * 80}>
               <HikeCard
                 hike={hike}
-                resolvedImages={hikeImages[hike.id]}
-                positions={hikePositions[hike.id]}
-                initialHeight={hikeHeights[hike.id]}
+                resolvedImages={images[hike.id]}
+                positions={positions[hike.id]}
+                initialHeight={heights[hike.id]}
                 isAdmin={isAdmin}
               />
             </ScrollFade>

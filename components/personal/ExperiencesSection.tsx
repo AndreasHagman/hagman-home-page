@@ -1,15 +1,16 @@
 'use client'
 
-import { experiences } from '@/lib/experiences'
+import type { Experience } from '@/lib/experiences'
 import ScrollFade from '@/components/ScrollFade'
 import ImageCarousel from './ImageCarousel'
 import { SLOTS } from '@/lib/slots'
 
 interface ExperiencesSectionProps {
+  experiences: Experience[]
   isAdmin?: boolean
-  experienceImages?: Record<string, string[]>
-  experiencePositions?: Record<string, string[]>
-  experienceHeights?: Record<string, number>
+  images?: Record<string, string[]>
+  positions?: Record<string, string[]>
+  heights?: Record<string, number>
 }
 
 function ExperienceCard({
@@ -53,7 +54,7 @@ function ExperienceCard({
   )
 }
 
-export default function ExperiencesSection({ isAdmin, experienceImages = {}, experiencePositions = {}, experienceHeights = {} }: ExperiencesSectionProps) {
+export default function ExperiencesSection({ experiences, isAdmin, images = {}, positions = {}, heights = {} }: ExperiencesSectionProps) {
   return (
     <section className="py-16 border-t border-border">
       <div className="max-w-5xl mx-auto px-6">
@@ -71,9 +72,9 @@ export default function ExperiencesSection({ isAdmin, experienceImages = {}, exp
             <ScrollFade key={exp.id} delay={i * 80}>
               <ExperienceCard
                 {...exp}
-                resolvedImages={experienceImages[exp.id]}
-                positions={experiencePositions[exp.id]}
-                initialHeight={experienceHeights[exp.id]}
+                resolvedImages={images[exp.id]}
+                positions={positions[exp.id]}
+                initialHeight={heights[exp.id]}
                 isAdmin={isAdmin}
               />
             </ScrollFade>

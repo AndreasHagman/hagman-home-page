@@ -7,8 +7,7 @@ import HikeSection from './HikeSection'
 import DogSection from './DogSection'
 import ExperiencesSection from './ExperiencesSection'
 import RacesSection from './RacesSection'
-import { hikes } from '@/lib/hikes'
-import { experiences } from '@/lib/experiences'
+import { DEFAULT_LISTS, mergeLists, type ContentLists } from '@/lib/content'
 
 interface PersonalImagesProps {
   isAdmin: boolean
@@ -25,67 +24,57 @@ function toNumber(value: unknown): number | undefined {
   return undefined
 }
 
+/** Pull the images, focal points and heights for one family of slots, keyed by item id. */
+function collect(data: Record<string, unknown>, prefix: string, ids: string[]) {
+  const images: Record<string, string[]> = {}
+  const positions: Record<string, string[]> = {}
+  const heights: Record<string, number> = {}
+
+  for (const id of ids) {
+    const imgs = toArray(data[`${prefix}-${id}`])
+    if (imgs.length) images[id] = imgs
+    const pos = toArray(data[`${prefix}-${id}-positions`])
+    if (pos.length) positions[id] = pos
+    const h = toNumber(data[`${prefix}-${id}-height`])
+    if (h) heights[id] = h
+  }
+
+  return { images, positions, heights }
+}
+
 export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
-  const [hikeImages, setHikeImages] = useState<Record<string, string[]>>({})
-  const [hikePositions, setHikePositions] = useState<Record<string, string[]>>({})
-  const [hikeHeights, setHikeHeights] = useState<Record<string, number>>({})
-  const [dogImages, setDogImages] = useState<string[]>([])
-  const [dogPositions, setDogPositions] = useState<string[]>([])
-  const [dogHeight, setDogHeight] = useState<number | undefined>()
-  const [raceImages, setRaceImages] = useState<string[]>([])
-  const [racePositions, setRacePositions] = useState<string[]>([])
-  const [raceHeight, setRaceHeight] = useState<number | undefined>()
-  const [experienceImages, setExperienceImages] = useState<Record<string, string[]>>({})
-  const [experiencePositions, setExperiencePositions] = useState<Record<string, string[]>>({})
-  const [experienceHeights, setExperienceHeights] = useState<Record<string, number>>({})
+  const [lists, setLists] = useState<ContentLists>(DEFAULT_LISTS)
+  const [slots, setSlots] = useState<Record<string, unknown>>({})
 
   useEffect(() => {
-    async function fetchImages() {
-      const snap = await getDoc(doc(db, 'personal-images', 'slots'))
-      if (!snap.exists()) return
-      const data = snap.data() as Record<string, unknown>
+    async function load() {
+      const results = await Promise.allSettled([
+        getDoc(doc(db, 'personal-images', 'slots')),
+        getDoc(doc(db, 'personal-content', 'lists')),
+      ])
 
-      const hImgs: Record<string, string[]> = {}
-      const hPos: Record<string, string[]> = {}
-      const hH: Record<string, number> = {}
-      for (const hike of hikes) {
-        const imgs = toArray(data[`hike-${hike.id}`])
-        if (imgs.length) hImgs[hike.id] = imgs
-        const pos = toArray(data[`hike-${hike.id}-positions`])
-        if (pos.length) hPos[hike.id] = pos
-        const h = toNumber(data[`hike-${hike.id}-height`])
-        if (h) hH[hike.id] = h
+      // Handle slots read
+      if (results[0].status === 'fulfilled') {
+        const slotSnap = results[0].value
+        if (slotSnap.exists()) setSlots(slotSnap.data() as Record<string, unknown>)
+      } else {
+        console.error('Failed to fetch image slots:', results[0].reason)
       }
-      setHikeImages(hImgs)
-      setHikePositions(hPos)
-      setHikeHeights(hH)
 
-      const eImgs: Record<string, string[]> = {}
-      const ePos: Record<string, string[]> = {}
-      const eH: Record<string, number> = {}
-      for (const exp of experiences) {
-        const imgs = toArray(data[`exp-${exp.id}`])
-        if (imgs.length) eImgs[exp.id] = imgs
-        const pos = toArray(data[`exp-${exp.id}-positions`])
-        if (pos.length) ePos[exp.id] = pos
-        const h = toNumber(data[`exp-${exp.id}-height`])
-        if (h) eH[exp.id] = h
+      // Handle lists read
+      if (results[1].status === 'fulfilled') {
+        const listSnap = results[1].value
+        setLists(mergeLists(listSnap.exists() ? (listSnap.data() as Record<string, unknown>) : undefined))
+      } else {
+        console.error('Failed to fetch content lists:', results[1].reason)
+        setLists(DEFAULT_LISTS)
       }
-      setExperienceImages(eImgs)
-      setExperiencePositions(ePos)
-      setExperienceHeights(eH)
-
-      setDogImages(toArray(data['caia']))
-      setDogPositions(toArray(data['caia-positions']))
-      setDogHeight(toNumber(data['caia-height']))
-
-      setRaceImages(toArray(data['races']))
-      setRacePositions(toArray(data['races-positions']))
-      setRaceHeight(toNumber(data['races-height']))
     }
-
-    fetchImages()
+    load().catch(console.error)
   }, [])
+
+  const hike = collect(slots, 'hike', lists.hikes.map((h) => h.id))
+  const exp = collect(slots, 'exp', lists.experiences.map((e) => e.id))
 
   return (
     <>
@@ -106,28 +95,31 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
         </div>
       )}
       <ExperiencesSection
+        experiences={lists.experiences}
         isAdmin={isAdmin}
-        experienceImages={experienceImages}
-        experiencePositions={experiencePositions}
-        experienceHeights={experienceHeights}
+        images={exp.images}
+        positions={exp.positions}
+        heights={exp.heights}
       />
       <RacesSection
+        races={lists.races}
         isAdmin={isAdmin}
-        resolvedImages={raceImages}
-        positions={racePositions}
-        initialHeight={raceHeight}
+        resolvedImages={toArray(slots['races'])}
+        positions={toArray(slots['races-positions'])}
+        initialHeight={toNumber(slots['races-height'])}
       />
       <HikeSection
+        hikes={lists.hikes}
         isAdmin={isAdmin}
-        hikeImages={hikeImages}
-        hikePositions={hikePositions}
-        hikeHeights={hikeHeights}
+        images={hike.images}
+        positions={hike.positions}
+        heights={hike.heights}
       />
       <DogSection
         isAdmin={isAdmin}
-        resolvedImages={dogImages}
-        positions={dogPositions}
-        initialHeight={dogHeight}
+        resolvedImages={toArray(slots['caia'])}
+        positions={toArray(slots['caia-positions'])}
+        initialHeight={toNumber(slots['caia-height'])}
       />
     </>
   )
