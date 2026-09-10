@@ -34,9 +34,10 @@ export function useEditableList<T extends { id: string }>(listKey: ListKey, init
     setItems(initial)
     persistedRef.current = initial
     itemsRef.current = initial
+    setError(null)
   }, [initial])
 
-  function save(next: T[], itemId: string | null) {
+  function save(next: T[], itemId: string | null): Promise<boolean> {
     itemsRef.current = next
     setItems(next)
     setError(null)
@@ -52,8 +53,8 @@ export function useEditableList<T extends { id: string }>(listKey: ListKey, init
     // `next` is captured here rather than read back from a ref at execution
     // time: the queued callback runs in a microtask, which can beat React's
     // commit, so a ref read could still see the pre-edit array.
-    chainRef.current = chainRef.current.then(async () => {
-      if (abortedRef.current) return
+    const savePromise = chainRef.current.then(async () => {
+      if (abortedRef.current) return false
 
       try {
         const res = await fetch('/api/admin/content', {
@@ -63,31 +64,37 @@ export function useEditableList<T extends { id: string }>(listKey: ListKey, init
         })
         if (!res.ok) {
           revert(res.status === 401 ? SESSION_EXPIRED : SAVE_FAILED)
-          return
+          return false
         }
         persistedRef.current = next
+        return true
       } catch {
         revert(SAVE_FAILED)
+        return false
       }
     })
+
+    // Keep the chain non-rejecting so a failure cannot poison subsequent saves
+    chainRef.current = savePromise.then(() => {}).catch(() => {})
+    return savePromise
   }
 
-  async function addItem(values: Record<string, string | number>) {
+  async function addItem(values: Record<string, string | number>): Promise<boolean> {
     const current = itemsRef.current
     const name = typeof values.name === 'string' ? values.name : ''
     const id = makeId(name, current.map((item) => item.id))
-    save([...current, { ...values, id } as unknown as T], null)
+    return save([...current, { ...values, id } as unknown as T], null)
   }
 
-  async function updateItem(id: string, values: Record<string, string | number>) {
-    save(
+  async function updateItem(id: string, values: Record<string, string | number>): Promise<boolean> {
+    return save(
       itemsRef.current.map((item) => (item.id === id ? ({ ...values, id } as unknown as T) : item)),
       id,
     )
   }
 
-  async function removeItem(id: string) {
-    save(itemsRef.current.filter((item) => item.id !== id), id)
+  async function removeItem(id: string): Promise<boolean> {
+    return save(itemsRef.current.filter((item) => item.id !== id), id)
   }
 
   return { items, error, addItem, updateItem, removeItem }

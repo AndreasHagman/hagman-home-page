@@ -24,6 +24,7 @@ export default function DeleteItemButton({ onConfirm, label }: DeleteItemButtonP
       <button
         type="button"
         onClick={() => { setArmed(false); onConfirm() }}
+        onBlur={() => setArmed(false)}
         className="px-2 h-6 rounded-full border text-[10px] font-mono border-red-400 text-red-400 transition-colors duration-200"
         aria-label={`Confirm: ${label}`}
       >

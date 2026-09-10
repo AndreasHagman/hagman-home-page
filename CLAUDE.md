@@ -35,14 +35,14 @@ components/
 components/personal/
   PersonalHero.tsx       — Hero section for /personal
   HobbySection.tsx       — Hobby/interest tags
-  RacesSection.tsx       — Race list: newest first, capped at 5 for visitors
-  ExperiencesSection.tsx — "Things I've done" cards; reads from lib/experiences.ts
-  HikeSection.tsx        — Grid of hike cards; reads from lib/hikes.ts
+  RacesSection.tsx       — Race list: newest first, capped at 5 for visitors; takes prop
+  ExperiencesSection.tsx — "Things I've done" cards; takes prop
+  HikeSection.tsx        — Grid of hike cards; takes prop
   HikeCard.tsx           — Individual hike card with image carousel ('use client')
   DogSection.tsx         — Caia section with image carousel ('use client')
-  PersonalImages.tsx     — Fetches all images/positions/heights from Firestore, renders sections
+  PersonalImages.tsx     — Fetches personal-images/slots and personal-content/lists from Firestore, renders sections
   ItemEditor.tsx         — Add/edit form rendered from a lib/content.ts field schema
-  DeleteItemButton.tsx   — Trash button that arms to 'Sure?' before deleting
+  DeleteItemButton.tsx   — Trash button that arms to 'Sure?' before deleting; disarms on blur
   ListError.tsx          — Error display for editable list save failures
   AdminUploadButton.tsx  — Uploads to Firebase Storage; mode='replace'|'add'
   DraggableImage.tsx     — Image with drag-to-reposition when isRepositioning=true
@@ -54,9 +54,9 @@ hooks/
 
 lib/
   projects.ts            — Project data array (add new apps here)
-  races.ts               — Race seed data (fallback only — see "Adding a race")
-  hikes.ts               — Hike seed data (fallback only — see "Adding a race")
-  experiences.ts         — Experience seed data (fallback only — see "Adding a race")
+  races.ts               — Race seed data (fallback only — see "Adding a race, hike or experience")
+  hikes.ts               — Hike seed data (fallback only — see "Adding a race, hike or experience")
+  experiences.ts         — Experience seed data (fallback only — see "Adding a race, hike or experience")
   content.ts             — List keys, field schemas, id generation, validation, fallback merge
   firebase.ts            — Firebase app init (guards against re-init), exports db and storage
 ```
@@ -90,13 +90,17 @@ file has no effect.
 
 Every item has a permanent `id`, assigned at creation from its name. Renaming
 an item never changes its `id`, which is why renaming does not orphan its
-uploaded images.
+uploaded images. Deleting an item does not delete its uploaded images: the
+slots entries (`hike-{id}`, `exp-{id}`) and Storage objects survive. Because
+ids are derived from the name, creating a new item with a deleted item's name
+regenerates the same id and silently inherits its old photos.
 
 ## /personal page architecture
 
 - `app/personal/page.tsx` — async server component; reads `admin_session` httpOnly cookie; passes `isAdmin` to `PersonalImages`
-- `PersonalImages` — client component; fetches `personal-images/slots` from Firestore on mount; resolves images/positions/heights for every hike, experience, and Caia; renders all personal sections
-- Admin controls (upload, drag-reposition, height) are only rendered when `isAdmin=true`
+- `PersonalImages` — client component; fetches `personal-images/slots` and `personal-content/lists` from Firestore on mount; resolves images/positions/heights for every hike, experience, and Caia; merges content lists over seed data using `mergeLists`; passes both `isAdmin` (for image editing) and `canEdit={isAdmin && contentLoaded}` (for content editing) to the three content sections; renders a banner when content load fails
+- The three content sections (`RacesSection`, `HikeSection`, `ExperiencesSection`) use `useEditableList` to manage optimistic state and saving for their lists; forms close only on successful save
+- Admin controls for images (upload, drag-reposition, height) are only rendered when `isAdmin=true`; admin controls for content (edit, delete, add) are only rendered when `canEdit=true`
 
 ## Firestore schema
 

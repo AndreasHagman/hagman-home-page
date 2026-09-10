@@ -52,6 +52,15 @@ export async function PATCH(req: NextRequest) {
     )
   }
 
-  await adminDb.collection('personal-content').doc('lists').set(payload, { merge: true })
+  try {
+    await adminDb.collection('personal-content').doc('lists').set(payload, { merge: true })
+  } catch (err) {
+    console.error('Failed to write content lists to Firestore:', err)
+    return NextResponse.json(
+      { error: 'Failed to save content' },
+      { status: 500 },
+    )
+  }
+
   return NextResponse.json({ success: true })
 }
