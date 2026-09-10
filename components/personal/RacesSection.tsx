@@ -6,6 +6,7 @@ import ScrollFade from '@/components/ScrollFade'
 import ImageCarousel from './ImageCarousel'
 import ItemEditor from './ItemEditor'
 import DeleteItemButton from './DeleteItemButton'
+import ListError from './ListError'
 import { useEditableList } from '@/hooks/useEditableList'
 import { FIELDS } from '@/lib/content'
 import { SLOTS } from '@/lib/slots'
@@ -112,9 +113,7 @@ export default function RacesSection({
                     </div>
                   )}
 
-                  {error?.itemId === race.id && (
-                    <p className="mt-1 text-[11px] font-mono text-red-400">{error.message}</p>
-                  )}
+                  <ListError error={error} itemId={race.id} className="mt-1" />
                 </div>
               ))}
 
@@ -147,9 +146,7 @@ export default function RacesSection({
                 )
               )}
 
-              {error?.itemId === null && (
-                <p className="text-[11px] font-mono text-red-400">{error.message}</p>
-              )}
+              <ListError error={error} itemId={null} />
             </div>
           </div>
         </ScrollFade>

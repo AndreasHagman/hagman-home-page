@@ -9,7 +9,7 @@ export interface EditableListError {
 }
 
 const SAVE_FAILED = 'Could not save'
-const SESSION_EXPIRED = 'Session expired — sign in again'
+export const SESSION_EXPIRED = 'Session expired — sign in again'
 
 export function useEditableList<T extends { id: string }>(listKey: ListKey, initial: T[]) {
   const [items, setItems] = useState<T[]>(initial)
@@ -28,6 +28,9 @@ export function useEditableList<T extends { id: string }>(listKey: ListKey, init
   const abortedRef = useRef(false)
 
   useEffect(() => {
+    // A new `initial` is fresh ground truth from the server, so anything still
+    // queued would persist state that has just been superseded.
+    abortedRef.current = true
     setItems(initial)
     persistedRef.current = initial
     itemsRef.current = initial
