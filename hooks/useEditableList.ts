@@ -15,9 +15,17 @@ export function useEditableList<T extends { id: string }>(listKey: ListKey, init
   const [items, setItems] = useState<T[]>(initial)
   const [error, setError] = useState<EditableListError | null>(null)
 
+  // The last array known to be on the server. A failed save reverts to this.
   const persistedRef = useRef<T[]>(initial)
-  const saveChainRef = useRef<Promise<void>>(Promise.resolve())
+  // Mirrors `items`, but updated synchronously: a mutation triggered before
+  // React has re-rendered still builds on the previous one's result.
   const itemsRef = useRef<T[]>(initial)
+  // Serializes requests so at most one PATCH is ever in flight. Each request
+  // sends the whole list, so overlapping ones would race in the server.
+  const chainRef = useRef<Promise<void>>(Promise.resolve())
+  // Set when a save fails. Saves already queued behind it are skipped, because
+  // the state they would persist has just been reverted.
+  const abortedRef = useRef(false)
 
   useEffect(() => {
     setItems(initial)
@@ -25,56 +33,58 @@ export function useEditableList<T extends { id: string }>(listKey: ListKey, init
     itemsRef.current = initial
   }, [initial])
 
-  useEffect(() => {
-    itemsRef.current = items
-  }, [items])
-
-  async function save(next: T[], itemId: string | null) {
+  function save(next: T[], itemId: string | null) {
+    itemsRef.current = next
     setItems(next)
     setError(null)
+    abortedRef.current = false
 
-    saveChainRef.current = saveChainRef.current.then(async () => {
-      const toSave = itemsRef.current
+    function revert(message: string) {
+      abortedRef.current = true
+      itemsRef.current = persistedRef.current
+      setItems(persistedRef.current)
+      setError({ itemId, message })
+    }
+
+    // `next` is captured here rather than read back from a ref at execution
+    // time: the queued callback runs in a microtask, which can beat React's
+    // commit, so a ref read could still see the pre-edit array.
+    chainRef.current = chainRef.current.then(async () => {
+      if (abortedRef.current) return
 
       try {
         const res = await fetch('/api/admin/content', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ [listKey]: toSave }),
+          body: JSON.stringify({ [listKey]: next }),
         })
         if (!res.ok) {
-          setItems(persistedRef.current)
-          setError({ itemId, message: res.status === 401 ? SESSION_EXPIRED : SAVE_FAILED })
-          saveChainRef.current = Promise.resolve()
-        } else {
-          persistedRef.current = toSave
-          setError(null)
+          revert(res.status === 401 ? SESSION_EXPIRED : SAVE_FAILED)
+          return
         }
+        persistedRef.current = next
       } catch {
-        setItems(persistedRef.current)
-        setError({ itemId, message: SAVE_FAILED })
-        saveChainRef.current = Promise.resolve()
+        revert(SAVE_FAILED)
       }
     })
-
-    await saveChainRef.current
   }
 
   async function addItem(values: Record<string, string | number>) {
+    const current = itemsRef.current
     const name = typeof values.name === 'string' ? values.name : ''
-    const id = makeId(name, items.map((item) => item.id))
-    await save([...items, { ...values, id } as unknown as T], null)
+    const id = makeId(name, current.map((item) => item.id))
+    save([...current, { ...values, id } as unknown as T], null)
   }
 
   async function updateItem(id: string, values: Record<string, string | number>) {
-    await save(
-      items.map((item) => (item.id === id ? ({ ...values, id } as unknown as T) : item)),
+    save(
+      itemsRef.current.map((item) => (item.id === id ? ({ ...values, id } as unknown as T) : item)),
       id,
     )
   }
 
   async function removeItem(id: string) {
-    await save(items.filter((item) => item.id !== id), id)
+    save(itemsRef.current.filter((item) => item.id !== id), id)
   }
 
   return { items, error, addItem, updateItem, removeItem }
