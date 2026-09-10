@@ -3,13 +3,7 @@
 import ScrollFade from '@/components/ScrollFade'
 import ImageCarousel from './ImageCarousel'
 import { SLOTS } from '@/lib/slots'
-
-const races = [
-  { name: 'Tough Viking',        year: 2023, note: undefined },
-  { name: 'Holmenkollstafetten', year: 2024, note: 'with Storebrand' },
-  { name: 'Sentrumsløpet',       year: 2025, note: undefined },
-  { name: 'Nordmarkstravern',    year: 2025, note: undefined },
-]
+import { races } from '@/lib/races'
 
 interface RacesSectionProps {
   isAdmin?: boolean
@@ -53,7 +47,7 @@ export default function RacesSection({ isAdmin, resolvedImages = [], positions =
             {/* Race list */}
             <div className="flex flex-col gap-3">
               {races.map((race) => (
-                <div key={race.name} className="flex items-baseline gap-3">
+                <div key={race.id} className="flex items-baseline gap-3">
                   <span
                     className="font-display text-lg text-foreground leading-tight"
                     style={{ fontVariationSettings: "'opsz' 20, 'wght' 500, 'SOFT' 15" }}

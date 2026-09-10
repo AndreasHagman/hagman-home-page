@@ -1,31 +1,35 @@
 export interface Hike {
+  id: string
   name: string
   location: string
   year: number
   description: string
-  image?: string // filename in /public/images/personal/
 }
 
 export const hikes: Hike[] = [
   {
+    id: 'trolltunga',
     name: 'Trolltunga',
     location: 'Vestland, Norway',
     year: 2021,
     description: 'One of the most dramatic hikes in Norway — a cliff jutting out 700 metres above Lake Ringedalsvatnet.',
   },
   {
+    id: 'preikestolen',
     name: 'Preikestolen',
     location: 'Rogaland, Norway',
     year: 2020,
     description: 'The famous cliff rising 604 metres above Lysefjord. Stunning panoramic views and a rewarding trail.',
   },
   {
+    id: 'kjeragbolten',
     name: 'Kjeragbolten',
     location: 'Rogaland, Norway',
     year: 2021,
     description: 'A boulder wedged in a crevice 984 metres above Lysefjord. One of the most iconic photo spots in Norway.',
   },
   {
+    id: 'galdhøpiggen',
     name: 'Galdhøpiggen',
     location: 'Jotunheimen, Norway',
     year: 2021,

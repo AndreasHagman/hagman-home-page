@@ -1,4 +1,5 @@
 export interface Experience {
+  id: string
   name: string
   location: string
   year: number
@@ -8,6 +9,7 @@ export interface Experience {
 
 export const experiences: Experience[] = [
   {
+    id: 'bungee-jump',
     name: 'Bungee Jump',
     location: 'Rjukan, Telemark',
     year: 2023,
@@ -15,6 +17,7 @@ export const experiences: Experience[] = [
     description: 'A free fall from the Krossobanen bridge in the dramatic Rjukan valley — one of the highest commercial bungee jumps in Norway.',
   },
   {
+    id: 'wind-tunnel',
     name: 'Wind Tunnel',
     location: 'Norway',
     year: 2022,
@@ -22,6 +25,7 @@ export const experiences: Experience[] = [
     description: 'Indoor skydiving in a vertical wind tunnel — an absolute blast, though getting your body to actually do what you want took some getting used to.',
   },
   {
+    id: 'scuba-diving',
     name: 'Scuba Diving',
     location: 'Egypt',
     year: 2022,

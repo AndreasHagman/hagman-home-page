@@ -13,7 +13,7 @@ interface HikeCardProps {
 }
 
 export default function HikeCard({ hike, resolvedImages = [], positions = [], initialHeight, isAdmin }: HikeCardProps) {
-  const slot = SLOTS.hike(hike.name)
+  const slot = SLOTS.hike(hike.id)
 
   return (
     <div className="flex flex-col bg-surface border border-border rounded-2xl overflow-hidden">

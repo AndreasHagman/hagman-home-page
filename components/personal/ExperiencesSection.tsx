@@ -13,14 +13,14 @@ interface ExperiencesSectionProps {
 }
 
 function ExperienceCard({
-  name, location, year, description, tag,
+  id, name, location, year, description, tag,
   resolvedImages = [], positions = [], initialHeight, isAdmin,
 }: {
-  name: string; location: string; year: number; description: string
+  id: string; name: string; location: string; year: number; description: string
   tag: string; resolvedImages?: string[]; positions?: string[]
   initialHeight?: number; isAdmin?: boolean
 }) {
-  const slot = SLOTS.exp(name)
+  const slot = SLOTS.exp(id)
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-stretch bg-surface border border-border rounded-2xl overflow-hidden">
@@ -68,12 +68,12 @@ export default function ExperiencesSection({ isAdmin, experienceImages = {}, exp
         </ScrollFade>
         <div className="flex flex-col gap-4">
           {experiences.map((exp, i) => (
-            <ScrollFade key={exp.name} delay={i * 80}>
+            <ScrollFade key={exp.id} delay={i * 80}>
               <ExperienceCard
                 {...exp}
-                resolvedImages={experienceImages[exp.name]}
-                positions={experiencePositions[exp.name]}
-                initialHeight={experienceHeights[exp.name]}
+                resolvedImages={experienceImages[exp.id]}
+                positions={experiencePositions[exp.id]}
+                initialHeight={experienceHeights[exp.id]}
                 isAdmin={isAdmin}
               />
             </ScrollFade>

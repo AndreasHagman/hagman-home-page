@@ -28,12 +28,12 @@ export default function HikeSection({ isAdmin, hikeImages = {}, hikePositions = 
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {hikes.map((hike, i) => (
-            <ScrollFade key={hike.name} delay={i * 80}>
+            <ScrollFade key={hike.id} delay={i * 80}>
               <HikeCard
                 hike={hike}
-                resolvedImages={hikeImages[hike.name]}
-                positions={hikePositions[hike.name]}
-                initialHeight={hikeHeights[hike.name]}
+                resolvedImages={hikeImages[hike.id]}
+                positions={hikePositions[hike.id]}
+                initialHeight={hikeHeights[hike.id]}
                 isAdmin={isAdmin}
               />
             </ScrollFade>

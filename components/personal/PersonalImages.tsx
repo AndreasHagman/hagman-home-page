@@ -14,10 +14,6 @@ interface PersonalImagesProps {
   isAdmin: boolean
 }
 
-function toSlug(name: string) {
-  return name.toLowerCase().replace(/\s+/g, '-')
-}
-
 function toArray(value: unknown): string[] {
   if (Array.isArray(value)) return value as string[]
   if (typeof value === 'string' && value) return [value]
@@ -53,13 +49,12 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
       const hPos: Record<string, string[]> = {}
       const hH: Record<string, number> = {}
       for (const hike of hikes) {
-        const slug = toSlug(hike.name)
-        const imgs = toArray(data[`hike-${slug}`])
-        if (imgs.length) hImgs[hike.name] = imgs
-        const pos = toArray(data[`hike-${slug}-positions`])
-        if (pos.length) hPos[hike.name] = pos
-        const h = toNumber(data[`hike-${slug}-height`])
-        if (h) hH[hike.name] = h
+        const imgs = toArray(data[`hike-${hike.id}`])
+        if (imgs.length) hImgs[hike.id] = imgs
+        const pos = toArray(data[`hike-${hike.id}-positions`])
+        if (pos.length) hPos[hike.id] = pos
+        const h = toNumber(data[`hike-${hike.id}-height`])
+        if (h) hH[hike.id] = h
       }
       setHikeImages(hImgs)
       setHikePositions(hPos)
@@ -69,13 +64,12 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
       const ePos: Record<string, string[]> = {}
       const eH: Record<string, number> = {}
       for (const exp of experiences) {
-        const slug = toSlug(exp.name)
-        const imgs = toArray(data[`exp-${slug}`])
-        if (imgs.length) eImgs[exp.name] = imgs
-        const pos = toArray(data[`exp-${slug}-positions`])
-        if (pos.length) ePos[exp.name] = pos
-        const h = toNumber(data[`exp-${slug}-height`])
-        if (h) eH[exp.name] = h
+        const imgs = toArray(data[`exp-${exp.id}`])
+        if (imgs.length) eImgs[exp.id] = imgs
+        const pos = toArray(data[`exp-${exp.id}-positions`])
+        if (pos.length) ePos[exp.id] = pos
+        const h = toNumber(data[`exp-${exp.id}-height`])
+        if (h) eH[exp.id] = h
       }
       setExperienceImages(eImgs)
       setExperiencePositions(ePos)
