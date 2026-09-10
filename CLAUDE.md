@@ -20,6 +20,7 @@ app/
   personal/page.tsx      — /personal page (async server component, checks admin cookie)
   admin/page.tsx         — Admin login form (client component)
   api/auth/login/        — POST: validates ADMIN_PASSWORD, sets httpOnly cookie
+  api/admin/content/     — PATCH: saves content lists to personal-content/lists
 
 components/
   Navbar.tsx             — Fixed top nav, blur-glass on scroll, mobile hamburger, theme toggle
@@ -34,22 +35,29 @@ components/
 components/personal/
   PersonalHero.tsx       — Hero section for /personal
   HobbySection.tsx       — Hobby/interest tags
+  RacesSection.tsx       — Race list: newest first, capped at 5 for visitors
   ExperiencesSection.tsx — "Things I've done" cards; reads from lib/experiences.ts
   HikeSection.tsx        — Grid of hike cards; reads from lib/hikes.ts
   HikeCard.tsx           — Individual hike card with image carousel ('use client')
   DogSection.tsx         — Caia section with image carousel ('use client')
   PersonalImages.tsx     — Fetches all images/positions/heights from Firestore, renders sections
+  ItemEditor.tsx         — Add/edit form rendered from a lib/content.ts field schema
+  DeleteItemButton.tsx   — Trash button that arms to 'Sure?' before deleting
+  ListError.tsx          — Error display for editable list save failures
   AdminUploadButton.tsx  — Uploads to Firebase Storage; mode='replace'|'add'
   DraggableImage.tsx     — Image with drag-to-reposition when isRepositioning=true
   HeightControl.tsx      — − px + buttons; saves height to Firestore
 
 hooks/
   useScrollFade.ts       — IntersectionObserver hook used by ScrollFade
+  useEditableList.ts     — Optimistic state + saving for one editable content list
 
 lib/
   projects.ts            — Project data array (add new apps here)
-  hikes.ts               — Hike data array (add new hikes here)
-  experiences.ts         — Experiences data array (add new experiences here)
+  races.ts               — Race seed data (fallback only — see "Adding a race")
+  hikes.ts               — Hike seed data (fallback only — see "Adding a race")
+  experiences.ts         — Experience seed data (fallback only — see "Adding a race")
+  content.ts             — List keys, field schemas, id generation, validation, fallback merge
   firebase.ts            — Firebase app init (guards against re-init), exports db and storage
 ```
 
@@ -69,32 +77,20 @@ Edit `lib/projects.ts`:
 }
 ```
 
-## Adding a hike
+## Adding a race, hike or experience
 
-Edit `lib/hikes.ts`:
+Don't edit code. Sign in at `/admin`, go to `/personal`, and use the
+`+ Add race` / `+ Add hike` / `+ Add experience` buttons. Hover any item for
+pencil (edit) and trash (delete) controls.
 
-```ts
-{
-  name: 'Besseggen',
-  location: 'Jotunheimen, Norway',
-  year: 2024,
-  description: 'A classic ridge walk between two lakes.',
-}
-```
+The arrays in `lib/races.ts`, `lib/hikes.ts` and `lib/experiences.ts` are seed
+data only. They render when `personal-content/lists` has nothing for that list;
+once a list has been saved from the admin UI, Firestore wins and editing the
+file has no effect.
 
-## Adding an experience
-
-Edit `lib/experiences.ts`:
-
-```ts
-{
-  name: 'Skydiving',
-  location: 'Østfold, Norway',
-  year: 2024,
-  tag: 'Extreme',
-  description: 'First tandem jump from 4000 metres.',
-}
-```
+Every item has a permanent `id`, assigned at creation from its name. Renaming
+an item never changes its `id`, which is why renaming does not orphan its
+uploaded images.
 
 ## /personal page architecture
 
@@ -118,7 +114,21 @@ Single document: `personal-images/slots`
 | `caia-positions` | `string[]` | Focal points |
 | `caia-height` | `number` | Image height in px |
 
-Slugs are lowercase, spaces replaced with hyphens (e.g. `hike-trolltunga`, `exp-bungee-jump`).
+Slot keys are derived from item `id` fields (e.g. `hike-trolltunga`, `exp-bungee-jump`).
+
+### `personal-content/lists`
+
+Single document holding the editable content lists.
+
+| Key | Type | Item shape |
+|---|---|---|
+| `races` | array | `{ id, name, year, distance?, note? }` |
+| `hikes` | array | `{ id, name, location, year, description }` |
+| `experiences` | array | `{ id, name, location, year, tag, description }` |
+
+Written only through `PATCH /api/admin/content`, which validates against the
+field schemas in `lib/content.ts` and strips anything not in them. Image slots
+join to these items by `id`: `hike-{id}`, `exp-{id}`.
 
 ## Dark mode
 
