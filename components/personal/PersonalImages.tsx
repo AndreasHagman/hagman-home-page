@@ -100,9 +100,10 @@ export default function PersonalImages({ isAdmin }: PersonalImagesProps) {
   const exp = collect(slots, 'exp', lists.experiences.map((e) => e.id))
 
   const canEdit = isAdmin && contentStatus === 'loaded'
-  // Replacing a slot writes a single URL over whatever it holds. With the slots
-  // read failed we cannot know what that is, so the replace button is withheld.
-  const canReplace = slotsStatus !== 'failed'
+  // Replacing a slot writes a single URL over whatever it holds. Until the read
+  // lands we cannot know what that is — and an unread slot looks empty, so the
+  // button would invite a click that silently drops every URL already there.
+  const canReplace = slotsStatus === 'loaded'
 
   return (
     <>

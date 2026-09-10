@@ -99,10 +99,13 @@ export default function ItemEditor({ fields, initial, submitLabel, onSubmit, onC
         >
           {submitLabel}
         </button>
+        {/* Cancelling mid-save would unmount this form and drop `submitting`, so a
+            second form opened right after could be closed by the first save landing. */}
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-1.5 rounded-full border border-border text-muted text-[11px] font-mono tracking-[0.1em] uppercase hover:text-foreground transition-colors duration-200"
+          disabled={submitting}
+          className="px-4 py-1.5 rounded-full border border-border text-muted text-[11px] font-mono tracking-[0.1em] uppercase hover:text-foreground transition-colors duration-200 disabled:opacity-40"
         >
           Cancel
         </button>

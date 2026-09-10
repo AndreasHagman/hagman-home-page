@@ -27,6 +27,7 @@ app/
   api/admin/content/     — PATCH: saves content lists to personal-content/lists
   api/admin/slots/       — PATCH: saves image slots to personal-images/slots (`key__append` pushes)
   api/upload/            — POST: legacy local-disk upload to public/images/personal (unused by the UI)
+  manifest.ts            — PWA web app manifest
 
 components/
   Navbar.tsx             — Fixed top nav, blur-glass on scroll, mobile hamburger, theme toggle
@@ -37,6 +38,8 @@ components/
   Footer.tsx             — Copyright + GitHub/LinkedIn links
   ThemeToggle.tsx        — Sun/Moon button, writes to localStorage
   ScrollFade.tsx         — Wrapper using IntersectionObserver for fade-in on scroll
+  PersonalTeaser.tsx     — Landing-page teaser for /personal (reads the lib/hikes seed array)
+  ProjectScreenshots.tsx — Screenshot gallery on /projects/[slug]; the other AdminUploadButton consumer
 
 components/personal/
   PersonalHero.tsx       — Hero section for /personal

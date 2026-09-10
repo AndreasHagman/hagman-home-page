@@ -152,8 +152,10 @@ export default function ImageCarousel({
             </div>
           )}
 
-          {/* Top-right: height control */}
-          {!isRepositioning && (
+          {/* Top-right: height control. Needs canReplace too: with the slots read
+              unresolved, imageHeight is the default, so saving it would overwrite a
+              stored custom height the page never managed to read. */}
+          {!isRepositioning && canReplace && (
             <div style={TR}>
               <HeightControl slot={slot} value={imageHeight} onChange={setImageHeight} />
             </div>
