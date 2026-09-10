@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { SESSION_EXPIRED, type EditableListError } from '@/hooks/useEditableList'
 
 interface ListErrorProps {
-  error: EditableListError | null
+  error: EditableListError | null | undefined
   /** Render only when the error belongs to this item. `null` matches an add. */
   itemId: string | null
   className?: string

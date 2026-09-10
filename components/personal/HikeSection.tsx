@@ -54,7 +54,7 @@ export default function HikeSection({
                 onDelete={() => removeItem(hike.id)}
                 onSubmit={(values) => { updateItem(hike.id, values); setEditingId(null) }}
                 onCancel={() => setEditingId(null)}
-                error={error?.itemId === hike.id ? error.message : null}
+                error={error}
               />
             </ScrollFade>
           ))}

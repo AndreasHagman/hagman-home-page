@@ -5,6 +5,7 @@ import ImageCarousel from './ImageCarousel'
 import ItemEditor from './ItemEditor'
 import DeleteItemButton from './DeleteItemButton'
 import ListError from './ListError'
+import type { EditableListError } from '@/hooks/useEditableList'
 import { FIELDS } from '@/lib/content'
 import { SLOTS } from '@/lib/slots'
 import type { Hike } from '@/lib/hikes'
@@ -20,7 +21,7 @@ interface HikeCardProps {
   onDelete?: () => void
   onSubmit?: (values: Record<string, string | number>) => void
   onCancel?: () => void
-  error?: string | null
+  error?: EditableListError | null
 }
 
 export default function HikeCard({
@@ -82,7 +83,7 @@ export default function HikeCard({
         </div>
       )}
 
-      <ListError error={error ? { itemId: hike.id, message: error } : null} itemId={hike.id} className="px-5 pb-4" />
+      <ListError error={error} itemId={hike.id} className="px-5 pb-4" />
     </div>
   )
 }

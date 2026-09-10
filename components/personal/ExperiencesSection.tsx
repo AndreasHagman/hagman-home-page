@@ -7,7 +7,7 @@ import ImageCarousel from './ImageCarousel'
 import ItemEditor from './ItemEditor'
 import DeleteItemButton from './DeleteItemButton'
 import ListError from './ListError'
-import { useEditableList } from '@/hooks/useEditableList'
+import { useEditableList, type EditableListError } from '@/hooks/useEditableList'
 import { FIELDS } from '@/lib/content'
 import { SLOTS } from '@/lib/slots'
 import type { Experience } from '@/lib/experiences'
@@ -31,7 +31,7 @@ interface ExperienceCardProps {
   onDelete: () => void
   onSubmit: (values: Record<string, string | number>) => void
   onCancel: () => void
-  error?: string | null
+  error?: EditableListError | null
 }
 
 function ExperienceCard({
@@ -98,7 +98,7 @@ function ExperienceCard({
             </div>
           )}
 
-          <ListError error={error ? { itemId: experience.id, message: error } : null} itemId={experience.id} className="mt-2" />
+          <ListError error={error} itemId={id} className="mt-2" />
         </div>
       )}
     </div>
@@ -142,7 +142,7 @@ export default function ExperiencesSection({
                 onDelete={() => removeItem(exp.id)}
                 onSubmit={(values) => { updateItem(exp.id, values); setEditingId(null) }}
                 onCancel={() => setEditingId(null)}
-                error={error?.itemId === exp.id ? error.message : null}
+                error={error}
               />
             </ScrollFade>
           ))}
